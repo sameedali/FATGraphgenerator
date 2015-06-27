@@ -5,8 +5,13 @@ import pprint
 # Define k for the k - array FAT tree topology || Assumes k is even
 k = 4;
 
-order_of_FAT_tree = k
+# Define the link bandwidths
+endHost_to_edge_switch_bandwidth = 0.1
+edge_switch_to_aggregator_switch_bandwidth = 0.1
+aggregator_switch_to_core_switch_bandwidth = 0.1
 
+# compute the FAT tree properties
+order_of_FAT_tree = k 
 number_of_pods = k
 
 number_of_hosts_under_edge_switch = k/2
@@ -22,10 +27,9 @@ number_of_edge_switches = number_of_edge_switches_per_pod*number_of_pods
 number_of_aggregator_switches = int(k/2)*number_of_pods
 
 number_of_core_switches = int(math.pow((k/2),2))
-
 number_of_aggregator_switches_in_pod = int(k/2)
 
-# Data structure to hold end hosts
+# Data structures to hold nodes and links
 endHosts = []
 edgeSwitchs = []
 aggregatorSwitchs = []
@@ -62,11 +66,11 @@ def generateCoreSwitchs(nodeIndex):
     return nodeIndex
 
 # DEFINE LINKS
-def generateEndNodeToEdgesSwitchLinks():
+def generateEndHostToEdgesSwitchLinks():
     count = 1
     edgeSwitchIndex = 0
     for endHost in endHosts:
-        endHostToEdgeSwitchLinks.append({'start': endHost['node'], 'end': edgeSwitchs[edgeSwitchIndex]['node'] })
+        endHostToEdgeSwitchLinks.append({'start': endHost['node'], 'end': edgeSwitchs[edgeSwitchIndex]['node'], "bandwidth": endHost_to_edge_switch_bandwidth})
         if (count%(number_of_edge_switches_per_pod) == 0):
             edgeSwitchIndex = edgeSwitchIndex + 1
         count += 1
@@ -100,7 +104,7 @@ def generateEdgesSwitchToAggregatorLinks():
     for pod in pods:
         for edge_switch in pod[1]:
             for aggregator_switch in pod[0]:
-                edgeSwitchToAggregatorLinks.append({"start": edge_switch['node'], "end": aggregator_switch['node']})
+                edgeSwitchToAggregatorLinks.append({"start": edge_switch['node'], "end": aggregator_switch['node'], "bandwidth": edge_switch_to_aggregator_switch_bandwidth})
     return
 
 def generateAggregatorSwitchToCoreSwitchLinks():
@@ -120,10 +124,31 @@ def generateAggregatorSwitchToCoreSwitchLinks():
         coreSwitchIndex = 0
         pod_count = 0
         while coreSwitchIndex < len(coreSwitches):
-            aggregatorSwitchToCoreSwitchLinks.append({'start': pod_aggregate_switches[pod_count]['node'], 'end': coreSwitches[coreSwitchIndex]['node'] })
+            aggregatorSwitchToCoreSwitchLinks.append({'start': pod_aggregate_switches[pod_count]['node'], 'end': coreSwitches[coreSwitchIndex]['node'], "bandwidth": aggregator_switch_to_core_switch_bandwidth})
             coreSwitchIndex += 1
             if (coreSwitchIndex%core_switches_per_aggregate_switch == 0):
                 pod_count += 1
+    return
+
+# add the backward links for a given list of links
+def addReverseLinks(linkList):
+    tmp = []
+    for link in linkList:
+        tmp.append({"start": link['end'], "end": link['start'], "bandwidth": link["bandwidth"]})
+    linkList.extend(tmp)
+    return linkList
+
+
+def convertToTXTFormat(nodeIndex):
+    res = open('out.txt','w')
+    for node in range(0,nodeIndex):
+        res.write(str(node)+'\n')
+    res.write('links\n')
+    links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
+    count = 0
+    for link in links:
+        res.write(link['start'][1:] + " " + link['end'][1:] + " " + str(count) + " " + str(link['bandwidth']) + "\n")
+        count += 1
     return
 
 def main():
@@ -153,17 +178,21 @@ def main():
     print "number_of_core_switches::", len(coreSwitches)
 
     # generate the links
-    generateEndNodeToEdgesSwitchLinks()
+    generateEndHostToEdgesSwitchLinks()
     print "EndNode To Edges Switch Links generated"
-    pprint.pprint(endHostToEdgeSwitchLinks)
+    pprint.pprint(addReverseLinks(endHostToEdgeSwitchLinks))
 
     generateEdgesSwitchToAggregatorLinks()
     print "Edge Switch To Aggregator Switch Links generated"
-    pprint.pprint(edgeSwitchToAggregatorLinks)
+    pprint.pprint(addReverseLinks(edgeSwitchToAggregatorLinks))
 
     generateAggregatorSwitchToCoreSwitchLinks()
     print "Aggregator Switch To Core Switch Links generated"
-    pprint.pprint(aggregatorSwitchToCoreSwitchLinks)
+    pprint.pprint(addReverseLinks(aggregatorSwitchToCoreSwitchLinks))
+
+    print "Writing file"
+    convertToTXTFormat(nodeIndex)
+    print 'task complete.'
     return
 
 if __name__ == '__main__':
