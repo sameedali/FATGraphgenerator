@@ -5,10 +5,15 @@ import pprint
 # Define k for the k - array FAT tree topology || Assumes k is even
 k = 4;
 
-# Define the link bandwidths
+# Define the link bandwidths & delays
 endHost_to_edge_switch_bandwidth = 0.1
 edge_switch_to_aggregator_switch_bandwidth = 0.1
 aggregator_switch_to_core_switch_bandwidth = 0.1
+
+
+endHost_to_edge_switch_delay = 0.025
+edge_switch_to_aggregator_switch_delay = 0.025
+aggregator_switch_to_core_switch_delay = 0.025
 
 # compute the FAT tree properties
 order_of_FAT_tree = k 
@@ -29,7 +34,7 @@ number_of_aggregator_switches = int(k/2)*number_of_pods
 number_of_core_switches = int(math.pow((k/2),2))
 number_of_aggregator_switches_in_pod = int(k/2)
 
-# Data structures to hold nodes and links
+# Global Data structures to hold nodes and links
 endHosts = []
 edgeSwitchs = []
 aggregatorSwitchs = []
@@ -143,12 +148,66 @@ def convertToTXTFormat(nodeIndex):
     res = open('out.txt','w')
     for node in range(0,nodeIndex):
         res.write(str(node)+'\n')
-    res.write('links\n')
+    res.write('Links\n')
     links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
     count = 0
     for link in links:
         res.write(link['start'][1:] + " " + link['end'][1:] + " " + str(count) + " " + str(link['bandwidth']) + "\n")
         count += 1
+        res.write(link['end'][1:] + " " + link['start'][1:] + " " + str(count) + " " + str(link['bandwidth']) + "\n")
+        count += 1
+    return
+
+# method for geenrating the .tcl file
+def convertToTCLFormat(nodeIndex):
+    res = open('out.tcl','w')
+
+    # writing some methods
+    res.write("set ns [new Simulator]\n\n$ns color 1 Blue\n$ns color 2 Red\n$ns color 3 Yellow\n\nset STATS_START 0\nset STATS_INTR 0.08\nset interval 0.08\n");
+    res.write("\n\nproc flowDump {link fm file_p interval} {\nglobal ns\n$ns at [expr [$ns now] + $interval]  \"flowDump $link $fm $file_p $interval\"\nputs $file_p [format \"\nTime: %.4f\" [$ns now]] \nset theflows [$fm flows]\nif {[llength $theflows] == 0} {\nreturn\n} else {\nset total_arr [expr double([$fm set barrivals_])]\nif {$total_arr > 0} {\nforeach f $theflows {\nset arr [expr [expr double([$f set barrivals_])] / $total_arr]\nif {$arr >= 0.0001} {\nprintFlow $f $file_p $fm $interval\n}\n$f reset\n}\n$fm reset\n}\n}\n}");
+    res.write("\n\nproc linkDump {link binteg pinteg qmon interval name linkfile util loss queue buf_bytes} {\n    global ns\n    set now_time [$ns now]\n    $ns at [expr $now_time + $interval] \"linkDump $link $binteg $pinteg $qmon $interval $name $linkfile $util $loss $queue $buf_bytes\"\n    set bandw [[$link link] set bandwidth_]\n    set queue_bd [$binteg set sum_]\n    set abd_queue [expr $queue_bd/[expr 1.*$interval]]\n    set queue_pd [$pinteg set sum_]\n    set apd_queue [expr $queue_pd/[expr 1.*$interval]]\n    set utilz [expr 8*[$qmon set bdepartures_]/[expr 1.*$interval*$bandw]]    \n    if {[$qmon set parrivals_] != 0} {\n        set drprt [expr [$qmon set pdrops_]/[expr 1.*[$qmon set parrivals_]]]\n        } else {\n            set drprt 0\n        }\n        if {$utilz != 0} {; \n        set a_delay [expr ($abd_queue*8*1000)/($utilz*$bandw)]\n        } else {\n            set a_delay 0.\n        }\n        puts $linkfile [format \"Time interval: %.6f-%.6f\" [expr [$ns now] - $interval] [$ns now]]\n        puts $linkfile [format \"Link %s: Utiliz=%.3f LossRate=%.3f AvgDelay=%.1fms AvgQueue(P)=%.0f AvgQueue(B)=%.0f\" $name $utilz $drprt $a_delay $apd_queue $abd_queue]\n        set av_qsize [expr [expr $abd_queue * 100] / $buf_bytes]\n        set utilz [expr $utilz * 100]\n        set drprt [expr $drprt * 100]\n        set buf_pkts [expr $buf_bytes / 1000]\n        puts $util [format \"%.6f   %.6f\" [$ns now] $utilz]\n        puts $loss [format \"%.6f   %.6f\" [$ns now] $drprt]\n        puts $queue [format \"%.6f   %.6f\" [$ns now] $av_qsize]\n        $binteg reset\n        $pinteg reset\n        $qmon reset\n    }\n\n");
+    
+    # opening files
+    res.write("set nf [open out.nam w]\n$ns namtrace-all $nf\n\nproc finish {} {\n\tglobal ns nf\n\t$ns flush-trace\n\tclose $nf\n\texit 0\n}\n\n");
+    
+    # creating nodes
+    res.write("set edge_link "+str(endHost_to_edge_switch_bandwidth*1000)+"Mb\nset agg_link "+str(edge_switch_to_aggregator_switch_bandwidth*1000)+"Mb\nset core_link "+str(aggregator_switch_to_core_switch_bandwidth*1000)+"Mb\n\nset edge_delay "+str(endHost_to_edge_switch_delay)+"ms\nset agg_delay  "+str(edge_switch_to_aggregator_switch_delay)+"ms\nset core_delay "+str(aggregator_switch_to_core_switch_delay)+"ms\n\nset num_hosts "+str((k*k*k)/4)+"\nset num_nodes "+str(nodeIndex)+"\n\nfor { set i 0 } { $i <= $num_nodes } { incr i } {\n    set n($i) [$ns node]\n}\n\n\n");
+
+    # defining links
+    links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
+    for link in links:
+        res.write("$ns duplex-link $n("+link['start'][1:]+") $n("+link['end'][1:]+") $edge_link $edge_delay DropTail\n");
+
+    
+    # writing link array1
+    index = 0;
+    res.write("\n\narray set links1 {");
+    for link in links:
+        res.write(" "+str(index)+" "+link['start'][1:]);
+        index += 1
+        res.write(" "+str(index)+" "+link['end'][1:]);
+        index += 1
+    res.write("}\n");
+
+    # writing link array2
+    index = 0;
+    res.write("array set links2 {");
+    for link in links:
+        res.write(" "+str(index)+" "+link['end'][1:]);
+        index += 1
+        res.write(" "+str(index)+" "+link['start'][1:]);
+        index += 1
+    res.write("}\n\n");
+
+    # writing other data
+    res.write("set lnk_size [array size links1]\n\n");
+    res.write("for { set i 0 } { $i < [expr $lnk_size] } { incr i } {\n\tset qmon_ab($i) [$ns monitor-queue $n($links1($i)) $n($links2($i)) \"\"]\n\tset bing_ab($i) [$qmon_ab($i) get-bytes-integrator];\n\tset ping_ab($i) [$qmon_ab($i) get-pkts-integrator];\n\tset fileq($i) \"qmon.trace\"\n\tset futil_name($i) \"qmon.util\"\n\tset floss_name($i) \"qmon.loss\"\n\tset fqueue_name($i) \"qmon.queue\"\n\n\tappend fileq($i) \"$links1($i)\"\n\tappend fileq($i) \"$links2($i)\"\n\tappend futil_name($i) \"$links1($i)\"\n\tappend futil_name($i) \"$links2($i)\"\n\tappend floss_name($i) \"$links1($i)\"\n\tappend floss_name($i) \"$links2($i)\"\n\tappend fqueue_name($i) \"$links1($i)\"\n\tappend fqueue_name($i) \"$links2($i)\"\n\n\tset fq_mon($i) [open $fileq($i) w]\n\tset f_util($i) [open $futil_name($i) w]\n\tset f_loss($i) [open $floss_name($i) w]\n\tset f_queue($i) [open $fqueue_name($i) w]\n\n\t$ns at $STATS_START  \"$qmon_ab($i) reset\"\n\t$ns at $STATS_START  \"$bing_ab($i) reset\"\n\t$ns at $STATS_START  \"$ping_ab($i) reset\"\n\tset buf_bytes [expr 0.00025 * 1000 / 1 ]\n\t$ns at [expr $STATS_START+$STATS_INTR] \"linkDump [$ns link $n($links1($i)) $n($links2($i))] $bing_ab($i) $ping_ab($i) $qmon_ab($i) $STATS_INTR A-B $fq_mon($i) $f_util($i) $f_loss($i) $f_queue($i) $buf_bytes\"\n}\n");
+
+
+    # writing last lines
+    res.write("\n\nset num_nodes "+str(nodeIndex)+";\nset num_agents 0\nfor { set i 0 } { $i < $num_nodes } { incr i } {\n\tfor {set j 0} {$j < $num_nodes} {incr j} {\n\t\tset p($num_agents) [new Agent/Ping]\n\t\t$ns attach-agent $n($i) $p($num_agents)\n\t\tincr num_agents\n\t}\n}\n");
+    res.write("\n\nset ite 0\nset jStart 0\nfor { set i 0 } { $i < "+str(nodeIndex)+" } { incr i } {\n\tfor { set j $jStart } { $j < "+str(nodeIndex+1)+" } { incr j } {\n\t\tif { $j == "+str(nodeIndex)+" } {\n\t\t\tset ite [expr $ite + $i + 1]\n\t\t\tcontinue\n\t\t}\n\n\t\t$ns connect $p($ite) $p([expr "+str(nodeIndex)+"*$j + $i])\n\t\tincr ite\n\t}\n\tincr jStart\n}\n");
+    res.write("\n\n$ns run");
     return
 
 def main():
@@ -180,20 +239,24 @@ def main():
     # generate the links
     generateEndHostToEdgesSwitchLinks()
     print "EndNode To Edges Switch Links generated"
-    pprint.pprint(addReverseLinks(endHostToEdgeSwitchLinks))
+    pprint.pprint(endHostToEdgeSwitchLinks)
 
     generateEdgesSwitchToAggregatorLinks()
     print "Edge Switch To Aggregator Switch Links generated"
-    pprint.pprint(addReverseLinks(edgeSwitchToAggregatorLinks))
+    pprint.pprint(edgeSwitchToAggregatorLinks)
 
     generateAggregatorSwitchToCoreSwitchLinks()
     print "Aggregator Switch To Core Switch Links generated"
-    pprint.pprint(addReverseLinks(aggregatorSwitchToCoreSwitchLinks))
+    pprint.pprint(aggregatorSwitchToCoreSwitchLinks)
 
-    print "Writing file"
+    print "Writing TXT file"
     convertToTXTFormat(nodeIndex)
     print 'task complete.'
-    return
+
+    print "Writing TCL file"
+    convertToTCLFormat(nodeIndex)
+    print 'task complete.'
+    return    
 
 if __name__ == '__main__':
     main()
