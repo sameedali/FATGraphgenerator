@@ -1,6 +1,7 @@
 #/usr/bin/python
 import math
 import pprint
+import random
 
 # Define k for the k - array FAT tree topology || Assumes k is even
 k = 4;
@@ -18,6 +19,7 @@ aggregator_switch_to_core_switch_delay = 0.025
 # compute the FAT tree properties
 order_of_FAT_tree = k 
 number_of_pods = k
+num_of_endhosts = (k*k*k)/4
 
 number_of_hosts_under_edge_switch = k/2
 
@@ -143,7 +145,6 @@ def addReverseLinks(linkList):
     linkList.extend(tmp)
     return linkList
 
-
 def convertToTXTFormat(nodeIndex):
     res = open('out.txt','w')
     for node in range(0,nodeIndex):
@@ -156,6 +157,7 @@ def convertToTXTFormat(nodeIndex):
         count += 1
         res.write(link['end'][1:] + " " + link['start'][1:] + " " + str(count) + " " + str(link['bandwidth']) + "\n")
         count += 1
+    res.close();
     return
 
 # method for geenrating the .tcl file
@@ -171,7 +173,7 @@ def convertToTCLFormat(nodeIndex):
     res.write("set nf [open out.nam w]\n$ns namtrace-all $nf\n\nproc finish {} {\n\tglobal ns nf\n\t$ns flush-trace\n\tclose $nf\n\texit 0\n}\n\n");
     
     # creating nodes
-    res.write("set edge_link "+str(endHost_to_edge_switch_bandwidth*1000)+"Mb\nset agg_link "+str(edge_switch_to_aggregator_switch_bandwidth*1000)+"Mb\nset core_link "+str(aggregator_switch_to_core_switch_bandwidth*1000)+"Mb\n\nset edge_delay "+str(endHost_to_edge_switch_delay)+"ms\nset agg_delay  "+str(edge_switch_to_aggregator_switch_delay)+"ms\nset core_delay "+str(aggregator_switch_to_core_switch_delay)+"ms\n\nset num_hosts "+str((k*k*k)/4)+"\nset num_nodes "+str(nodeIndex)+"\n\nfor { set i 0 } { $i <= $num_nodes } { incr i } {\n    set n($i) [$ns node]\n}\n\n\n");
+    res.write("set edge_link "+str(endHost_to_edge_switch_bandwidth*1000)+"Mb\nset agg_link "+str(edge_switch_to_aggregator_switch_bandwidth*1000)+"Mb\nset core_link "+str(aggregator_switch_to_core_switch_bandwidth*1000)+"Mb\n\nset edge_delay "+str(endHost_to_edge_switch_delay)+"ms\nset agg_delay  "+str(edge_switch_to_aggregator_switch_delay)+"ms\nset core_delay "+str(aggregator_switch_to_core_switch_delay)+"ms\n\nset num_hosts "+str(num_of_endhosts)+"\nset num_nodes "+str(nodeIndex)+"\n\nfor { set i 0 } { $i <= $num_nodes } { incr i } {\n    set n($i) [$ns node]\n}\n\n\n");
 
     # defining links
     links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
@@ -208,8 +210,76 @@ def convertToTCLFormat(nodeIndex):
     res.write("\n\nset num_nodes "+str(nodeIndex)+";\nset num_agents 0\nfor { set i 0 } { $i < $num_nodes } { incr i } {\n\tfor {set j 0} {$j < $num_nodes} {incr j} {\n\t\tset p($num_agents) [new Agent/Ping]\n\t\t$ns attach-agent $n($i) $p($num_agents)\n\t\tincr num_agents\n\t}\n}\n");
     res.write("\n\nset ite 0\nset jStart 0\nfor { set i 0 } { $i < "+str(nodeIndex)+" } { incr i } {\n\tfor { set j $jStart } { $j < "+str(nodeIndex+1)+" } { incr j } {\n\t\tif { $j == "+str(nodeIndex)+" } {\n\t\t\tset ite [expr $ite + $i + 1]\n\t\t\tcontinue\n\t\t}\n\n\t\t$ns connect $p($ite) $p([expr "+str(nodeIndex)+"*$j + $i])\n\t\tincr ite\n\t}\n\tincr jStart\n}\n");
     res.write("\n\n$ns run");
+    res.close();
     return
 
+def getReverseLinks(links):
+    result = [];
+    for link in links:
+        result.append({'start': link['end'], 'end': link['start'], 'bandwidth': link['bandwidth']});
+    return result
+
+# funciton fo greating mapping
+def generateMapping():
+    res = open("mapping.txt", 'w');   # opening file
+    
+    links1 = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
+    links2 = getReverseLinks(links1);
+    
+    # creating the links list
+    links = [];
+    for i in range(0, len(links1)):
+        links.append(links1[i]);
+        links.append(links2[i]);
+
+    # assigning ids to links
+    id = 0;
+    for link in links:
+        link['id'] = str(id)
+        id += 1
+
+    line1 = "";         # temporary string variable
+    line2 = "";         # temporary string variable
+    ids = [];           # list that keeps track of links that belong to nodes under consideration
+
+    for i in range(0, num_of_endhosts, 2):
+        print len(links);
+        temps = list(links)
+        line1 = ""
+        line2 = ""
+
+        # giving nodes their own links
+        for temp in temps:
+            if str(i) == temp['start'] or str(i) == temp['end']:
+                line1 += (temp['id'] + " ");
+                ids.append(temp['id']);
+
+            if str(i + 1) == temp['start'] or str(i + 1) == temp['end']:
+                line2 += (temp['id'] + " ");
+                ids.append(temp['id']);
+
+        # deleting their own links
+        for _id in ids:
+            del(temps[int(_id)]);
+
+        # choosind random links and assigning it to a node
+        for r in range(0, len(temps)/2):
+            temp = temps.pop(int(round(random.random()*(len(temps) - 1))));
+            line1 += (temp['id'] + " ")
+
+        # giving rest of the links to the other node
+        for temp in temps:
+            line2 += (temp['id'] + " ");
+
+        # writing data to the file
+        res.write(str(i) + ": " + line1 + "\n");
+        res.write(str(i + 1) + ": " + line2 + "\n");
+
+    # closing and returning
+    res.close();
+    return;
+
+# main function of python script
 def main():
     """
     Defines the main method for the program
@@ -256,7 +326,11 @@ def main():
     print "Writing TCL file"
     convertToTCLFormat(nodeIndex)
     print 'task complete.'
-    return    
+
+    print "Generating Mapping"
+    generateMapping();
+    print 'task complete.'    
+    return
 
 if __name__ == '__main__':
     main()
