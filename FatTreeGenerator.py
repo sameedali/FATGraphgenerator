@@ -219,118 +219,140 @@ def getReverseLinks(links):
         result.append({'start': link['end'], 'end': link['start'], 'bandwidth': link['bandwidth']});
     return result
 
+# function to divide a list into a number of lists
+def slice_list(input, size):
+	input_size = len(input)
+	slice_size = input_size / size
+	remain = input_size % size
+	result = []
+	iterator = iter(input)
+	for i in range(size):
+		result.append([])
+		for j in range(slice_size):
+			result[i].append(iterator.next())
+		if remain:
+			result[i].append(iterator.next())
+			remain -= 1
+	return result
+
 # funciton fo greating mapping
 def generateMapping():
-    res = open("mapping.txt", 'w');   # opening file
-    
-    links1 = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
-    links2 = getReverseLinks(links1);
+	res = open("mapping.txt", 'w');   # opening file
+
+	links1 = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
+	links2 = getReverseLinks(links1);
     
     # creating the links list
-    links = [];
-    for i in range(0, len(links1)):
-        links.append(links1[i]);
-        links.append(links2[i]);
+	links = [];
+	for i in range(0, len(links1)):
+		links.append(links1[i]);
+		links.append(links2[i]);
 
     # assigning ids to links
-    id = 0;
-    for link in links:
-        link['id'] = str(id)
-        id += 1
+	id = 0;
+	for link in links:
+		link['id'] = str(id)
+		id += 1
 
-    line1 = "";         # temporary string variable
-    line2 = "";         # temporary string variable
-    ids = [];           # list that keeps track of links that belong to nodes under consideration
+	ids = [];           # list that keeps track of links that belong to nodes under consideration
+	listoflinks = [];	# list to store links of nodes
 
-    for i in range(0, num_of_endhosts, 2):
-        print len(links);
-        temps = list(links)
-        line1 = ""
-        line2 = ""
+	for i in range(0, num_of_endhosts, number_of_hosts_under_edge_switch):
+		# fetching original list
+		temps = list(links)
 
-        # giving nodes their own links
-        for temp in temps:
-            if str(i) == temp['start'] or str(i) == temp['end']:
-                line1 += (temp['id'] + " ");
-                ids.append(temp['id']);
+		# clearing temporary list
+		listoflinks = list();
+		ids = list();
 
-            if str(i + 1) == temp['start'] or str(i + 1) == temp['end']:
-                line2 += (temp['id'] + " ");
-                ids.append(temp['id']);
+		for k in range(0, number_of_hosts_under_edge_switch):
+			listoflinks.append("");
 
-        # deleting their own links
-        for _id in ids:
-            del(temps[int(_id)]);
+        # giving nodes their own links and putting their ids into list "ids"
+		for temp in temps:
+			for j in range(0, number_of_hosts_under_edge_switch):
+				if ("n" + str(i + j)) == temp['start'] or ("n" + str(i + j)) == temp['end']:
+					ids.append(temp['id']);
+					listoflinks[j] += (temp['id'] + " ")
 
-        # choosind random links and assigning it to a node
-        for r in range(0, len(temps)/2):
-            temp = temps.pop(int(round(random.random()*(len(temps) - 1))));
-            line1 += (temp['id'] + " ")
+		# deleting links from temporary list of links
+		for _id in ids:
+			del(temps[int(_id)]);
 
-        # giving rest of the links to the other node
-        for temp in temps:
-            line2 += (temp['id'] + " ");
+		# shuffling the rest of the links
+		random.shuffle(temps);
 
-        # writing data to the file
-        res.write(str(i) + ": " + line1 + "\n");
-        res.write(str(i + 1) + ": " + line2 + "\n");
+		# divinding the list of "links" into k/2 hosts
+		parts = list();
+		parts = slice_list(temps, number_of_hosts_under_edge_switch);
+		
+		# writing the contents of parts of temps (temporary list of links) to listoflinks (another temporary list)
+		for k in range(0, len(parts)):
+			part = parts[k];
+			for link_in_part in part:
+				listoflinks[k] += (link_in_part['id'] + " ")
 
-    # closing and returning
-    res.close();
-    return;
+		# writing data to the file
+		for singlelist in listoflinks:
+			res.write(singlelist);
+			res.write("\n");
+	
+	# closing and returning
+	res.close();
+	return;
 
 # main function of python script
 def main():
-    """
-    Defines the main method for the program
-    """
-    nodeIndex = 0
-    # generate the nodes
-    nodeIndex = generateEndHosts(nodeIndex)
-    print "Endhost generation complete"
-    pprint.pprint(endHosts)
-    print "number_of_endHosts::", len(endHosts)
+	"""
+	Defines the main method for the program
+	"""
+	nodeIndex = 0
+	# generate the nodes
+	nodeIndex = generateEndHosts(nodeIndex)
+	print "Endhost generation complete"
+	pprint.pprint(endHosts)
+	print "number_of_endHosts::", len(endHosts)
 
-    nodeIndex = generateEdgeSwitches(nodeIndex)
-    print "edgeSwitchs generation complete"
-    pprint.pprint(edgeSwitchs)
-    print "number_of_edge_switches::", len(edgeSwitchs)
+	nodeIndex = generateEdgeSwitches(nodeIndex)
+	print "edgeSwitchs generation complete"
+	pprint.pprint(edgeSwitchs)
+	print "number_of_edge_switches::", len(edgeSwitchs)
 
-    nodeIndex = generateAggregatorSwitches(nodeIndex)
-    print "aggregatorSwitchs generation complete"
-    pprint.pprint(aggregatorSwitchs)
-    print "number_of_aggregator_switches::", len(aggregatorSwitchs)
+	nodeIndex = generateAggregatorSwitches(nodeIndex)
+	print "aggregatorSwitchs generation complete"
+	pprint.pprint(aggregatorSwitchs)
+	print "number_of_aggregator_switches::", len(aggregatorSwitchs)
 
-    nodeIndex = generateCoreSwitchs(nodeIndex)
-    print "coreSwitches generation complete"
-    pprint.pprint(coreSwitches)
-    print "number_of_core_switches::", len(coreSwitches)
+	nodeIndex = generateCoreSwitchs(nodeIndex)
+	print "coreSwitches generation complete"
+	pprint.pprint(coreSwitches)
+	print "number_of_core_switches::", len(coreSwitches)
 
-    # generate the links
-    generateEndHostToEdgesSwitchLinks()
-    print "EndNode To Edges Switch Links generated"
-    pprint.pprint(endHostToEdgeSwitchLinks)
+	# generate the links
+	generateEndHostToEdgesSwitchLinks()
+	print "EndNode To Edges Switch Links generated"
+	pprint.pprint(endHostToEdgeSwitchLinks)
 
-    generateEdgesSwitchToAggregatorLinks()
-    print "Edge Switch To Aggregator Switch Links generated"
-    pprint.pprint(edgeSwitchToAggregatorLinks)
+	generateEdgesSwitchToAggregatorLinks()
+	print "Edge Switch To Aggregator Switch Links generated"
+	pprint.pprint(edgeSwitchToAggregatorLinks)
 
-    generateAggregatorSwitchToCoreSwitchLinks()
-    print "Aggregator Switch To Core Switch Links generated"
-    pprint.pprint(aggregatorSwitchToCoreSwitchLinks)
+	generateAggregatorSwitchToCoreSwitchLinks()
+	print "Aggregator Switch To Core Switch Links generated"
+	pprint.pprint(aggregatorSwitchToCoreSwitchLinks)
 
-    print "Writing TXT file"
-    convertToTXTFormat(nodeIndex)
-    print 'task complete.'
+	print "Writing TXT file"
+	convertToTXTFormat(nodeIndex)
+	print 'task complete.'
 
-    print "Writing TCL file"
-    convertToTCLFormat(nodeIndex)
-    print 'task complete.'
+	print "Writing TCL file"
+	convertToTCLFormat(nodeIndex)
+	print 'task complete.'
 
-    print "Generating Mapping"
-    generateMapping();
-    print 'task complete.'    
-    return
+	print "Generating Mapping"
+	generateMapping();
+	print 'task complete.'    
+	return
 
 if __name__ == '__main__':
-    main()
+	main()
