@@ -12,8 +12,7 @@ set interval 0.08
 proc flowDump {link fm file_p interval} {
 global ns
 $ns at [expr [$ns now] + $interval]  "flowDump $link $fm $file_p $interval"
-puts $file_p [format "
-Time: %.4f" [$ns now]] 
+puts $file_p [format "Time: %.4f" [$ns now]] 
 set theflows [$fm flows]
 if {[llength $theflows] == 0} {
 return
