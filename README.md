@@ -21,8 +21,8 @@ Example topology:
       (TOR)    (TOR)
      . .         .
     .   .       . .
-   .     .     .   .
-  (0)    (1)  (2)  (3) ...
+     .     .     .   .
+    (0)    (1)  (2)  (3) ...
 
 
 Numbering for nodes starts at the end host and continues hierarchically i.e. End hosts then TOR then AGG then core switches.
