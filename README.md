@@ -10,17 +10,17 @@ A tcl representing the topology or the given k is geenrated on running the pytho
 
 Example topology:
 
-
-                 (CORE)
-                .     .
-              .        .
-            .           .
-          (Agg)         (Agg)
-        .     .           ...
-       .       .
-      (TOR)    (TOR)
-     . .         .
-    .   .       . .
+ 
+                   (CORE)
+                  .     .
+                .        .
+              .           .
+            (Agg)         (Agg)
+          .     .           ...
+         .       .
+        (TOR)    (TOR)
+       . .         .
+      .   .       . .
      .     .     .   .
     (0)    (1)  (2)  (3) ...
 
