@@ -11,40 +11,18 @@ A tcl representing the topology or the given k is geenrated on running the pytho
 Example topology:
 
 
-               (CORE)
-
-
-              .     .
-
-
-            .        .
-
-
-          .           .
-
-
-        (Agg)         (Agg)
-
-
-      .     .           ...
-
-
-     .       .
-
-
-    (TOR)    (TOR)
-
-
-   . .         .
-
-
-  .   .       . .
-
-
- .     .     .   .
-
-
-(0)    (1)  (2)  (3) ...
+                 (CORE)
+                .     .
+              .        .
+            .           .
+          (Agg)         (Agg)
+        .     .           ...
+       .       .
+      (TOR)    (TOR)
+     . .         .
+    .   .       . .
+   .     .     .   .
+  (0)    (1)  (2)  (3) ...
 
 
 Numbering for nodes starts at the end host and continues hierarchically i.e. End hosts then TOR then AGG then core switches.
