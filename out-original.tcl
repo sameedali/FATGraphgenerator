@@ -138,6 +138,31 @@ for { set i 0 } { $i < 36 } { incr i } {
 	incr jStart
 }
 
+set num_agents1 $num_agents
+
+for { set i 0 } { $i < $num_nodes } { incr i } {
+	for {set j 0} {$j < $num_nodes} {incr j} {
+		set p($num_agents) [new Agent/Raza]
+		$ns attach-agent $n($i) $p($num_agents)
+		incr num_agents
+	}
+}
+
+set ite $num_agents1
+set jStart 0
+for { set i 0 } { $i < 36 } { incr i } {
+	for { set j $jStart } { $j < 37 } { incr j } {
+		if { $j == 36 } {
+			set ite [expr $ite + $i + 1]
+			continue
+		}
+
+		$ns connect $p($ite) $p([expr 36*$j + $i + $num_agents1])
+		incr ite
+	}
+	incr jStart
+}
+
 
 puts "running ns"
 $ns run
