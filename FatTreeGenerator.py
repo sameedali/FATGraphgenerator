@@ -2,6 +2,7 @@
 import math
 import pprint
 import random
+import os
 
 # Define k for the k - array FAT tree topology || Assumes k is even
 k = 4;
@@ -204,7 +205,7 @@ def convertToTCLFormat(nodeIndex):
     # writing last lines
     res.write("\n\nset num_nodes "+str(nodeIndex)+";\nset num_agents 0\nfor { set i 0 } { $i < $num_nodes } { incr i } {\n\tfor {set j 0} {$j < $num_nodes} {incr j} {\n\t\tset p($num_agents) [new Agent/Ping]\n\t\t$ns attach-agent $n($i) $p($num_agents)\n\t\tincr num_agents\n\t}\n}\n");
     res.write("\n\nset ite 0\nset jStart 0\nfor { set i 0 } { $i < "+str(nodeIndex)+" } { incr i } {\n\tfor { set j $jStart } { $j < "+str(nodeIndex+1)+" } { incr j } {\n\t\tif { $j == "+str(nodeIndex)+" } {\n\t\t\tset ite [expr $ite + $i + 1]\n\t\t\tcontinue\n\t\t}\n\n\t\t$ns connect $p($ite) $p([expr "+str(nodeIndex)+"*$j + $i])\n\t\tincr ite\n\t}\n\tincr jStart\n}\n");
-    res.write("\n\n$ns run");
+    res.write("\n\nputs \"running ns\"\n$ns run");
     res.close();
     return
 
@@ -294,7 +295,29 @@ def generateMapping():
 
 	# closing and returning
 	res.close();
+
+    print "graphs creation started"
+    createGraphs();
+    print "graphs creation completed"
 	return;
+
+def createGraphs():
+    import commands
+    status, output = commands.getstatusoutput("find . -name qmon.util\*");
+    mylist = output.split("\n");
+    
+    plotter = open("qmon-util-plotter.gp", 'w');    
+    for filename in mylist:
+        filename = filename[2:]
+        
+        plotter.write("set terminal postscript color eps enhanced\n");
+        plotter.write("set output \"plot-qmon-util"+filename[9:]+".ps\"\n");
+
+        plotter.write("set title \"Plot of Link Utilization\"\nset ylabel \"Link Utilization\"\nset xlabel \"Number of RTTs\" # 0,0.5\"\nset xtics 10\n")
+        plotter.write("plot \""+filename+"\" title \"link utilization\" with lines,");
+        os.system("gnuplot qmon-util-plotter.gp");
+    return
+
 
 # main function of python script
 def main():
@@ -346,7 +369,7 @@ def main():
 
 	print "Generating Mapping"
 	generateMapping();
-	print 'task complete.'
+	print 'task complete.';
 	return
 
 if __name__ == '__main__':
