@@ -17,7 +17,7 @@ edge_switch_to_aggregator_switch_delay = 0.025
 aggregator_switch_to_core_switch_delay = 0.025
 
 # compute the FAT tree properties
-order_of_FAT_tree = k 
+order_of_FAT_tree = k
 number_of_pods = k
 num_of_endhosts = (k*k*k)/4
 
@@ -164,14 +164,10 @@ def convertToTXTFormat(nodeIndex):
 def convertToTCLFormat(nodeIndex):
     res = open('out.tcl','w')
 
-    # writing some methods
-    res.write("set ns [new Simulator]\n\n$ns color 1 Blue\n$ns color 2 Red\n$ns color 3 Yellow\n\nset STATS_START 0\nset STATS_INTR 0.08\nset interval 0.08\n");
-    res.write("\n\nproc flowDump {link fm file_p interval} {\n    global ns \n    $ns at [expr [$ns now] + $interval]  \"flowDump $link $fm $file_p $interval\"\n    puts $file_p [format \"Time: %.4f\" [$ns now]] \n    set theflows [$fm flows]\n    if {[llength $theflows] == 0} {\n        return\n        } else {\n           set total_arr [expr double([$fm set barrivals_])]\n         if {$total_arr > 0} {\n               foreach f $theflows {\n                   set arr [expr [expr double([$f set barrivals_])] / $total_arr]\n                   if {$arr >= 0.0001} {\n                    printFlow $f $file_p $fm $interval\n                }       \n                $f reset\n            }       \n            $fm reset\n        }\n    }\n}\n");
-    res.write("\n\nproc linkDump {link binteg pinteg qmon interval name linkfile util loss queue buf_bytes} {\n    global ns\n    set now_time [$ns now]\n    $ns at [expr $now_time + $interval] \"linkDump $link $binteg $pinteg $qmon $interval $name $linkfile $util $loss $queue $buf_bytes\"\n    set bandw [[$link link] set bandwidth_]\n    set queue_bd [$binteg set sum_]\n    set abd_queue [expr $queue_bd/[expr 1.*$interval]]\n    set queue_pd [$pinteg set sum_]\n    set apd_queue [expr $queue_pd/[expr 1.*$interval]]\n    set utilz [expr 8*[$qmon set bdepartures_]/[expr 1.*$interval*$bandw]]    \n    if {[$qmon set parrivals_] != 0} {\n        set drprt [expr [$qmon set pdrops_]/[expr 1.*[$qmon set parrivals_]]]\n        } else {\n            set drprt 0\n        }\n        if {$utilz != 0} {; \n        set a_delay [expr ($abd_queue*8*1000)/($utilz*$bandw)]\n        } else {\n            set a_delay 0.\n        }\n        puts $linkfile [format \"Time interval: %.6f-%.6f\" [expr [$ns now] - $interval] [$ns now]]\n        puts $linkfile [format \"Link %s: Utiliz=%.3f LossRate=%.3f AvgDelay=%.1fms AvgQueue(P)=%.0f AvgQueue(B)=%.0f\" $name $utilz $drprt $a_delay $apd_queue $abd_queue]\n        set av_qsize [expr [expr $abd_queue * 100] / $buf_bytes]\n        set utilz [expr $utilz * 100]\n        set drprt [expr $drprt * 100]\n        set buf_pkts [expr $buf_bytes / 1000]\n        puts $util [format \"%.6f   %.6f\" [$ns now] $utilz]\n        puts $loss [format \"%.6f   %.6f\" [$ns now] $drprt]\n        puts $queue [format \"%.6f   %.6f\" [$ns now] $av_qsize]\n        $binteg reset\n        $pinteg reset\n        $qmon reset\n    }\n\n");
-    
     # opening files
+    res.write("source template.tcl\n\n")
     res.write("set nf [open out.nam w]\n$ns namtrace-all $nf\n\nproc finish {} {\n\tglobal ns nf\n\t$ns flush-trace\n\tclose $nf\n\texit 0\n}\n\n");
-    
+
     # creating nodes
     res.write("set edge_link "+str(endHost_to_edge_switch_bandwidth*1000)+"Mb\nset agg_link "+str(edge_switch_to_aggregator_switch_bandwidth*1000)+"Mb\nset core_link "+str(aggregator_switch_to_core_switch_bandwidth*1000)+"Mb\n\nset edge_delay "+str(endHost_to_edge_switch_delay)+"ms\nset agg_delay  "+str(edge_switch_to_aggregator_switch_delay)+"ms\nset core_delay "+str(aggregator_switch_to_core_switch_delay)+"ms\n\nset num_hosts "+str(num_of_endhosts)+"\nset num_nodes "+str(nodeIndex)+"\n\nfor { set i 0 } { $i <= $num_nodes } { incr i } {\n    set n($i) [$ns node]\n}\n\n\n");
 
@@ -180,7 +176,6 @@ def convertToTCLFormat(nodeIndex):
     for link in links:
         res.write("$ns duplex-link $n("+link['start'][1:]+") $n("+link['end'][1:]+") $edge_link $edge_delay DropTail\n");
 
-    
     # writing link array1
     index = 0;
     res.write("\n\narray set links1 {");
@@ -241,7 +236,7 @@ def generateMapping():
 
 	links1 = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
 	links2 = getReverseLinks(links1);
-    
+
     # creating the links list
 	links = [];
 	for i in range(0, len(links1)):
@@ -285,7 +280,7 @@ def generateMapping():
 		# divinding the list of "links" into k/2 hosts
 		parts = list();
 		parts = slice_list(temps, number_of_hosts_under_edge_switch);
-		
+
 		# writing the contents of parts of temps (temporary list of links) to listoflinks (another temporary list)
 		for k in range(0, len(parts)):
 			part = parts[k];
@@ -296,7 +291,7 @@ def generateMapping():
 		for singlelist in listoflinks:
 			res.write(singlelist);
 			res.write("\n");
-	
+
 	# closing and returning
 	res.close();
 	return;
@@ -351,7 +346,7 @@ def main():
 
 	print "Generating Mapping"
 	generateMapping();
-	print 'task complete.'    
+	print 'task complete.'
 	return
 
 if __name__ == '__main__':
