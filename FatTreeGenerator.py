@@ -165,7 +165,7 @@ def convertToTCLFormat(nodeIndex):
     res = open('out.tcl','w')
 
     # opening files
-    res.write("source template.tcl")
+    res.write("source template.tcl\n\n")
     res.write("set nf [open out.nam w]\n$ns namtrace-all $nf\n\nproc finish {} {\n\tglobal ns nf\n\t$ns flush-trace\n\tclose $nf\n\texit 0\n}\n\n");
 
     # creating nodes

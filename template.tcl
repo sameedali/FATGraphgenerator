@@ -11,8 +11,8 @@ set interval 0.08
 
 proc flowDump {link fm file_p interval} {
     global ns
-    $ns at [expr [$ns now] + $interval]  \"flowDump $link $fm $file_p $interval\"
-    puts $file_p [format \"Time: %.4f\" [$ns now]]
+    $ns at [expr [$ns now] + $interval]  "flowDump $link $fm $file_p $interval"
+    puts $file_p [format "Time: %.4f" [$ns now]]
     set theflows [$fm flows]
     if {[llength $theflows] == 0} {
         return
@@ -35,7 +35,7 @@ proc flowDump {link fm file_p interval} {
 proc linkDump {link binteg pinteg qmon interval name linkfile util loss queue buf_bytes} {
     global ns
     set now_time [$ns now]
-    $ns at [expr $now_time + $interval] \"linkDump $link $binteg $pinteg $qmon $interval $name $linkfile $util $loss $queue $buf_bytes\"
+    $ns at [expr $now_time + $interval] "linkDump $link $binteg $pinteg $qmon $interval $name $linkfile $util $loss $queue $buf_bytes"
     set bandw [[$link link] set bandwidth_]
     set queue_bd [$binteg set sum_]
     set abd_queue [expr $queue_bd/[expr 1.*$interval]]
@@ -52,15 +52,15 @@ proc linkDump {link binteg pinteg qmon interval name linkfile util loss queue bu
         } else {
             set a_delay 0.
         }
-        puts $linkfile [format \"Time interval: %.6f-%.6f\" [expr [$ns now] - $interval] [$ns now]]
-        puts $linkfile [format \"Link %s: Utiliz=%.3f LossRate=%.3f AvgDelay=%.1fms AvgQueue(P)=%.0f AvgQueue(B)=%.0f\" $name $utilz $drprt $a_delay $apd_queue $abd_queue]
+        puts $linkfile [format "Time interval: %.6f-%.6f" [expr [$ns now] - $interval] [$ns now]]
+        puts $linkfile [format "Link %s: Utiliz=%.3f LossRate=%.3f AvgDelay=%.1fms AvgQueue(P)=%.0f AvgQueue(B)=%.0f" $name $utilz $drprt $a_delay $apd_queue $abd_queue]
         set av_qsize [expr [expr $abd_queue * 100] / $buf_bytes]
         set utilz [expr $utilz * 100]
         set drprt [expr $drprt * 100]
         set buf_pkts [expr $buf_bytes / 1000]
-        puts $util [format \"%.6f   %.6f\" [$ns now] $utilz]
-        puts $loss [format \"%.6f   %.6f\" [$ns now] $drprt]
-        puts $queue [format \"%.6f   %.6f\" [$ns now] $av_qsize]
+        puts $util [format "%.6f   %.6f" [$ns now] $utilz]
+        puts $loss [format "%.6f   %.6f" [$ns now] $drprt]
+        puts $queue [format "%.6f   %.6f" [$ns now] $av_qsize]
         $binteg reset
         $pinteg reset
         $qmon reset

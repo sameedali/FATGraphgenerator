@@ -1,4 +1,6 @@
-source template.tclset nf [open out.nam w]
+source template.tcl
+
+set nf [open out.nam w]
 $ns namtrace-all $nf
 
 proc finish {} {
@@ -137,4 +139,5 @@ for { set i 0 } { $i < 36 } { incr i } {
 }
 
 
+puts "running ns"
 $ns run
