@@ -292,13 +292,11 @@ def generateMapping():
 		for singlelist in listoflinks:
 			res.write(singlelist);
 			res.write("\n");
-
 	# closing and returning
 	res.close();
-
-    print "graphs creation started"
-    createGraphs();
-    print "graphs creation completed"
+	print "graphs creation started"
+	createGraphs();
+	print "graphs creation completed"
 	return;
 
 def createGraphs():
