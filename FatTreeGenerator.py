@@ -166,21 +166,32 @@ def convertToTXTFormat(nodeIndex):
 def convertToTCLFormat(nodeIndex):
     res = open('out.tcl','w')
 
-    # opening files
     res.write("source template.tcl\n\n")
-    res.write("set nf [open out.nam w]\n$ns namtrace-all $nf\n\nproc finish {} {\n\tglobal ns nf\n\t$ns flush-trace\n\tclose $nf\n\texit 0\n}\n\n");
+    res.write("# opening output files\n");
+    res.write("set nf [open out.nam w]\n$ns namtrace-all $nf\n\n");
+
+    res.write("# defining finish procedure\n");
+    res.write("proc finish {} {\n\tglobal ns nf\n\t$ns flush-trace\n\tclose $nf\n\texit 0\n}\n\n");
 
     # creating nodes
-    res.write("set edge_link "+str(endHost_to_edge_switch_bandwidth*1000)+"Mb\nset agg_link "+str(edge_switch_to_aggregator_switch_bandwidth*1000)+"Mb\nset core_link "+str(aggregator_switch_to_core_switch_bandwidth*1000)+"Mb\n\nset edge_delay "+str(endHost_to_edge_switch_delay)+"ms\nset agg_delay  "+str(edge_switch_to_aggregator_switch_delay)+"ms\nset core_delay "+str(aggregator_switch_to_core_switch_delay)+"ms\n\nset num_hosts "+str(num_of_endhosts)+"\nset num_nodes "+str(nodeIndex)+"\n\nfor { set i 0 } { $i <= $num_nodes } { incr i } {\n    set n($i) [$ns node]\n}\n\n\n");
+    res.write("# defining link properties\n");
+    res.write("set edge_link "+str(endHost_to_edge_switch_bandwidth*1000)+"Mb\nset agg_link "+str(edge_switch_to_aggregator_switch_bandwidth*1000)+"Mb\nset core_link "+str(aggregator_switch_to_core_switch_bandwidth*1000)+"Mb\n\n")
+    res.write("set edge_delay "+str(endHost_to_edge_switch_delay)+"ms\nset agg_delay  "+str(edge_switch_to_aggregator_switch_delay)+"ms\nset core_delay "+str(aggregator_switch_to_core_switch_delay)+"ms\n\n"); 
+    res.write("set num_hosts "+str(num_of_endhosts)+"\nset num_nodes "+str(nodeIndex)+"\n\n"); 
+
+    res.write("# creating nodes\n");
+    res.write("for { set i 0 } { $i <= $num_nodes } { incr i } {\n    set n($i) [$ns node]\n}\n\n");
 
     # defining links
+    res.write("# creating links\n");
     links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
     for link in links:
         res.write("$ns duplex-link $n("+link['start'][1:]+") $n("+link['end'][1:]+") $edge_link $edge_delay DropTail\n");
 
     # writing link array1
+    res.write("\n# creating link arrays\n");
     index = 0;
-    res.write("\n\narray set links1 {");
+    res.write("array set links1 {");
     for link in links:
         res.write(" "+str(index)+" "+link['start'][1:]);
         index += 1
@@ -196,12 +207,16 @@ def convertToTCLFormat(nodeIndex):
         index += 1
         res.write(" "+str(index)+" "+link['start'][1:]);
         index += 1
-    res.write("}\n\n");
+    res.write("}\n");
 
     # writing other data
     res.write("set lnk_size [array size links1]\n\n");
-    res.write("for { set i 0 } { $i < [expr $lnk_size] } { incr i } {\n\tset qmon_ab($i) [$ns monitor-queue $n($links1($i)) $n($links2($i)) \"\"]\n\tset bing_ab($i) [$qmon_ab($i) get-bytes-integrator];\n\tset ping_ab($i) [$qmon_ab($i) get-pkts-integrator];\n\tset fileq($i) \"qmon.trace\"\n\tset futil_name($i) \"qmon.util\"\n\tset floss_name($i) \"qmon.loss\"\n\tset fqueue_name($i) \"qmon.queue\"\n\n\tappend fileq($i) \"$links1($i)\"\n\tappend fileq($i) \"$links2($i)\"\n\tappend futil_name($i) \"$links1($i)\"\n\tappend futil_name($i) \"$links2($i)\"\n\tappend floss_name($i) \"$links1($i)\"\n\tappend floss_name($i) \"$links2($i)\"\n\tappend fqueue_name($i) \"$links1($i)\"\n\tappend fqueue_name($i) \"$links2($i)\"\n\n\tset fq_mon($i) [open $fileq($i) w]\n\tset f_util($i) [open $futil_name($i) w]\n\tset f_loss($i) [open $floss_name($i) w]\n\tset f_queue($i) [open $fqueue_name($i) w]\n\n\t$ns at $STATS_START  \"$qmon_ab($i) reset\"\n\t$ns at $STATS_START  \"$bing_ab($i) reset\"\n\t$ns at $STATS_START  \"$ping_ab($i) reset\"\n\tset buf_bytes [expr 0.00025 * 1000 / 1 ]\n\t$ns at [expr $STATS_START+$STATS_INTR] \"linkDump [$ns link $n($links1($i)) $n($links2($i))] $bing_ab($i) $ping_ab($i) $qmon_ab($i) $STATS_INTR A-B $fq_mon($i) $f_util($i) $f_loss($i) $f_queue($i) $buf_bytes\"\n}\n");
-
+    res.write("# monitoring links\n");
+    res.write("for { set i 0 } { $i < [expr $lnk_size] } { incr i } {\n\tset qmon_ab($i) [$ns monitor-queue $n($links1($i)) $n($links2($i)) \"\"]\n\tset bing_ab($i) [$qmon_ab($i) get-bytes-integrator];\n\tset ping_ab($i) [$qmon_ab($i) get-pkts-integrator];\n\tset fileq($i) \"qmon.trace\"\n\tset futil_name($i) \"qmon.util\"\n\tset floss_name($i) \"qmon.loss\"\n\tset fqueue_name($i) \"qmon.queue\"\n\n\
+    append fileq($i) \"$links1($i)\"\n\tappend fileq($i) \"$links2($i)\"\n\tappend futil_name($i) \"$links1($i)\"\n\tappend futil_name($i) \"$links2($i)\"\n\tappend floss_name($i) \"$links1($i)\"\n\tappend floss_name($i) \"$links2($i)\"\n\tappend fqueue_name($i) \"$links1($i)\"\n\tappend fqueue_name($i) \"$links2($i)\"\n\n\
+    set fq_mon($i) [open $fileq($i) w]\n\tset f_util($i) [open $futil_name($i) w]\n\tset f_loss($i) [open $floss_name($i) w]\n\tset f_queue($i) [open $fqueue_name($i) w]\n\n\
+    $ns at $STATS_START  \"$qmon_ab($i) reset\"\n\t$ns at $STATS_START  \"$bing_ab($i) reset\"\n\t$ns at $STATS_START  \"$ping_ab($i) reset\"\n\tset buf_bytes [expr 0.00025 * 1000 / 1 ]\n\
+    $ns at [expr $STATS_START+$STATS_INTR] \"linkDump [$ns link $n($links1($i)) $n($links2($i))] $bing_ab($i) $ping_ab($i) $qmon_ab($i) $STATS_INTR A-B $fq_mon($i) $f_util($i) $f_loss($i) $f_queue($i) $buf_bytes\"\n}\n");
 
     # writing Ping agent to the .tcl file
     res.write("\n\nset num_nodes "+str(nodeIndex)+";\nset num_agents 0\nfor { set i 0 } { $i < $num_nodes } { incr i } {\n\tfor {set j 0} {$j < $num_nodes} {incr j} {\n\t\tset p($num_agents) [new Agent/Ping]\n\t\t$ns attach-agent $n($i) $p($num_agents)\n\t\tincr num_agents\n\t}\n}\n");
