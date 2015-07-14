@@ -21,7 +21,7 @@ set core_delay 0.025ms
 set num_hosts 16
 set num_nodes 36
 
-for { set i 0 } { $i <= $num_nodes } { incr i } {
+for { set i 0 } { $i < $num_nodes } { incr i } {
     set n($i) [$ns node]
 }
 
@@ -91,8 +91,7 @@ for { set i 0 } { $i < [expr $lnk_size] } { incr i } {
 	set fqueue_name($i) "qmon.queue"
 
 	append fileq($i) "$links1($i)"
-	append fileq($i) "$links2($i)"
-	append futil_name($i) "$links1($i)"
+	append fileq($i) "$links2($i)" append futil_name($i) "$links1($i)"
 	append futil_name($i) "$links2($i)"
 	append floss_name($i) "$links1($i)"
 	append floss_name($i) "$links2($i)"
@@ -138,6 +137,59 @@ for { set i 0 } { $i < 36 } { incr i } {
 	incr jStart
 }
 
+# establish ping connections and check if they are with correct source and dest node
+# RAZA AGENT CODE
+set num_agents1 $num_agents
+for { set i 0 } { $i < $num_nodes } { incr i } {
+	for {set j 0} {$j < $num_nodes} {incr j} {
+		set p($num_agents) [new Agent/Ping]
+		$ns attach-agent $n($i) $p($num_agents)
+		incr num_agents
+	}
+}
+
+set ite $num_agents1
+set jStart 0
+for { set i 0 } { $i < 36 } { incr i } {
+	for { set j $jStart } { $j < 37 } { incr j } {
+		if { $j == 36 } {
+			set ite [expr $ite + $i + 1]
+			continue
+		}
+		$ns connect $p($ite) $p([expr 36*$j + $i + $num_agents1])
+		incr ite
+	}
+	incr jStart
+}
+
+# Define a 'recv' function for the class 'Agent/Ping'
+Agent/Ping instproc recv {from rtt} {
+	$self instvar node_
+	# log in ping.cc
+    # puts "{\"node\": [$node_ id], \"from\": $from}"
+}
+
+proc get_agent_number {src dst num_nodes} {
+    # Given a source and dest node id it returns the agent connecting them
+    set agent_number [expr [expr $src * $num_nodes] + $dst]
+    return [expr $agent_number + [expr $num_nodes * $num_nodes]]
+}
+
+set t 0
+for { set i 0 } { $i < $num_nodes } { incr i } {
+	for { set j 0} { $j < $num_nodes } { incr j } {
+        set node0 $i
+        set node1 $j
+        set val [get_agent_number $node0 $node1 $num_nodes]
+        puts "{\"agent\": $val, \"from\":$i, \"to\":$j, \"expected\": \"true\"},"
+        $ns at $t "$p($val) send $val"
+	}
+    set t [expr $t + 3]
+}
+
+incr t
+#$ns at 2 "$p(2) send"
+$ns at $t "finish"
 
 puts "running ns"
 $ns run
