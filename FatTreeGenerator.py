@@ -167,11 +167,6 @@ def convertToTCLFormat(nodeIndex):
     res = open('out.tcl','w')
 
     res.write("source template.tcl\n\n")
-    res.write("# opening output files\n");
-    res.write("set nf [open out.nam w]\n$ns namtrace-all $nf\n\n");
-
-    res.write("# defining finish procedure\n");
-    res.write("proc finish {} {\n\tglobal ns nf\n\t$ns flush-trace\n\tclose $nf\n\texit 0\n}\n\n");
 
     # creating nodes
     res.write("# defining link properties\n");
@@ -212,11 +207,11 @@ def convertToTCLFormat(nodeIndex):
     # writing other data
     res.write("set lnk_size [array size links1]\n\n");
     res.write("# monitoring links\n");
-    res.write("for { set i 0 } { $i < [expr $lnk_size] } { incr i } {\n\tset qmon_ab($i) [$ns monitor-queue $n($links1($i)) $n($links2($i)) \"\"]\n\tset bing_ab($i) [$qmon_ab($i) get-bytes-integrator];\n\tset ping_ab($i) [$qmon_ab($i) get-pkts-integrator];\n\tset fileq($i) \"qmon.trace\"\n\tset futil_name($i) \"qmon.util\"\n\tset floss_name($i) \"qmon.loss\"\n\tset fqueue_name($i) \"qmon.queue\"\n\n\
-    append fileq($i) \"$links1($i)\"\n\tappend fileq($i) \"$links2($i)\"\n\tappend futil_name($i) \"$links1($i)\"\n\tappend futil_name($i) \"$links2($i)\"\n\tappend floss_name($i) \"$links1($i)\"\n\tappend floss_name($i) \"$links2($i)\"\n\tappend fqueue_name($i) \"$links1($i)\"\n\tappend fqueue_name($i) \"$links2($i)\"\n\n\
-    set fq_mon($i) [open $fileq($i) w]\n\tset f_util($i) [open $futil_name($i) w]\n\tset f_loss($i) [open $floss_name($i) w]\n\tset f_queue($i) [open $fqueue_name($i) w]\n\n\
+    res.write("for { set i 0 } { $i < [expr $lnk_size] } { incr i } {\n\tset qmon_ab($i) [$ns monitor-queue $n($links1($i)) $n($links2($i)) \"\"]\n\tset bing_ab($i) [$qmon_ab($i) get-bytes-integrator];\n\tset ping_ab($i) [$qmon_ab($i) get-pkts-integrator];\n\tset fileq($i) \"qmon.trace\"\n\tset futil_name($i) \"qmon.util\"\n\t\n\
+    append fileq($i) \"$links1($i)\"\n\tappend fileq($i) \"$links2($i)\"\n\tappend futil_name($i) \"$links1($i)\"\n\tappend futil_name($i) \"$links2($i)\"\n\t\n\
+    set fq_mon($i) [open $fileq($i) w]\n\tset f_util($i) [open $futil_name($i) w]\n\n\n\
     $ns at $STATS_START  \"$qmon_ab($i) reset\"\n\t$ns at $STATS_START  \"$bing_ab($i) reset\"\n\t$ns at $STATS_START  \"$ping_ab($i) reset\"\n\tset buf_bytes [expr 0.00025 * 1000 / 1 ]\n\
-    $ns at [expr $STATS_START+$STATS_INTR] \"linkDump [$ns link $n($links1($i)) $n($links2($i))] $bing_ab($i) $ping_ab($i) $qmon_ab($i) $STATS_INTR A-B $fq_mon($i) $f_util($i) $f_loss($i) $f_queue($i) $buf_bytes\"\n}\n");
+    $ns at [expr $STATS_START+$STATS_INTR] \"linkDump [$ns link $n($links1($i)) $n($links2($i))] $bing_ab($i) $ping_ab($i) $qmon_ab($i) $STATS_INTR A-B $fq_mon($i) $f_util($i) $buf_bytes\"\n}\n");
 
     # writing Ping agent to the .tcl file
     res.write("\n\nset num_nodes "+str(nodeIndex)+";\nset num_agents 0\nfor { set i 0 } { $i < $num_nodes } { incr i } {\n\tfor {set j 0} {$j < $num_nodes} {incr j} {\n\t\tset p($num_agents) [new Agent/Ping]\n\t\t$ns attach-agent $n($i) $p($num_agents)\n\t\tincr num_agents\n\t}\n}\n");
@@ -230,13 +225,14 @@ def convertToTCLFormat(nodeIndex):
     res.close();
     return
 
+# function for generating reverse links
 def getReverseLinks(links):
     result = [];
     for link in links:
         result.append({'start': link['end'], 'end': link['start'], 'bandwidth': link['bandwidth']});
     return result
 
-# function to divide a list into a number of lists
+# function for dividing a list into a number of lists
 def slice_list(input, size):
     input_size = len(input)
     slice_size = input_size / size
@@ -252,7 +248,7 @@ def slice_list(input, size):
             remain -= 1
     return result
 
-# funciton fo greating mapping
+# funciton for greating mapping
 def generateMapping():
     res = open("mapping.txt", 'w');   # opening file
 
@@ -316,12 +312,9 @@ def generateMapping():
 
     # closing and returning
     res.close();
-
-    print "graphs creation started"
-    createGraphs();
-    print "graphs creation completed"
     return;
 
+# function for creating graphs from qmon.util* files
 def createGraphs():
     status, output = commands.getstatusoutput("find . -name qmon.util\*");
     mylist = output.split("\n");
