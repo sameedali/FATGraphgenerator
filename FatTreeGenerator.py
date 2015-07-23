@@ -267,9 +267,10 @@ def generateMapping():
         link['id'] = str(id)
         id += 1
 
-    ids = [];           # list that keeps track of links that belong to nodes under consideration
-    listoflinks = [];    # list to store links of nodes
+    ids = [];                       # list that keeps track of links that belong to nodes under consideration
+    listoflinks = [];               # list to store links of nodes
 
+    linkIndex = 0;                  # variable for indexing of links
     for i in range(0, num_of_endhosts, number_of_hosts_under_edge_switch):
         # fetching original list
         temps = list(links)
@@ -307,8 +308,11 @@ def generateMapping():
 
         # writing data to the file
         for singlelist in listoflinks:
+            res.write(str(linkIndex));
+            res.write(": ");
             res.write(singlelist);
             res.write("\n");
+            linkIndex += 1;           # incrementing link index
 
     # closing and returning
     res.close();

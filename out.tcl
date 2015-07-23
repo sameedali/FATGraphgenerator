@@ -1,17 +1,5 @@
 source template.tcl
 
-# opening output files
-set nf [open out.nam w]
-$ns namtrace-all $nf
-
-# defining finish procedure
-proc finish {} {
-	global ns nf
-	$ns flush-trace
-	close $nf
-	exit 0
-}
-
 # defining link properties
 set edge_link 100.0Mb
 set agg_link 100.0Mb
@@ -91,28 +79,21 @@ for { set i 0 } { $i < [expr $lnk_size] } { incr i } {
 	set ping_ab($i) [$qmon_ab($i) get-pkts-integrator];
 	set fileq($i) "qmon.trace"
 	set futil_name($i) "qmon.util"
-	set floss_name($i) "qmon.loss"
-	set fqueue_name($i) "qmon.queue"
-
+	
     append fileq($i) "$links1($i)"
 	append fileq($i) "$links2($i)"
 	append futil_name($i) "$links1($i)"
 	append futil_name($i) "$links2($i)"
-	append floss_name($i) "$links1($i)"
-	append floss_name($i) "$links2($i)"
-	append fqueue_name($i) "$links1($i)"
-	append fqueue_name($i) "$links2($i)"
-
+	
     set fq_mon($i) [open $fileq($i) w]
 	set f_util($i) [open $futil_name($i) w]
-	set f_loss($i) [open $floss_name($i) w]
-	set f_queue($i) [open $fqueue_name($i) w]
+
 
     $ns at $STATS_START  "$qmon_ab($i) reset"
 	$ns at $STATS_START  "$bing_ab($i) reset"
 	$ns at $STATS_START  "$ping_ab($i) reset"
 	set buf_bytes [expr 0.00025 * 1000 / 1 ]
-    $ns at [expr $STATS_START+$STATS_INTR] "linkDump [$ns link $n($links1($i)) $n($links2($i))] $bing_ab($i) $ping_ab($i) $qmon_ab($i) $STATS_INTR A-B $fq_mon($i) $f_util($i) $f_loss($i) $f_queue($i) $buf_bytes"
+    $ns at [expr $STATS_START+$STATS_INTR] "linkDump [$ns link $n($links1($i)) $n($links2($i))] $bing_ab($i) $ping_ab($i) $qmon_ab($i) $STATS_INTR A-B $fq_mon($i) $f_util($i) $buf_bytes"
 }
 
 
@@ -145,7 +126,7 @@ for { set i 0 } { $i < 36 } { incr i } {
 set num_agents1 $num_agents
 for { set i 0 } { $i < $num_nodes } { incr i } {
 	for {set j 0} {$j < $num_nodes} {incr j} {
-		set p($num_agents) [new Agent/Ping]
+		set p($num_agents) [new Agent/Raza]
 		$ns attach-agent $n($i) $p($num_agents)
 		incr num_agents
 	}
@@ -165,34 +146,6 @@ for { set i 0 } { $i < 36 } { incr i } {
 	incr jStart
 }
 
-# Define a 'recv' function for the class 'Agent/Ping'
-Agent/Ping instproc recv {from rtt} {
-	$self instvar node_
-	# log in ping.cc
-    # puts "{\"node\": [$node_ id], \"from\": $from}"
-}
-
-proc get_agent_number {src dst num_nodes} {
-    # Given a source and dest node id it returns the agent connecting them
-    set agent_number [expr [expr $src * $num_nodes] + $dst]
-    return [expr $agent_number + [expr $num_nodes * $num_nodes]]
-}
-
-set t 0
-for { set i 0 } { $i < $num_nodes } { incr i } {
-	for { set j 0} { $j < $num_nodes } { incr j } {
-        set node0 $i
-        set node1 $j
-        set val [get_agent_number $node0 $node1 $num_nodes]
-        puts "{\"agent\": $val, \"from\":$i, \"to\":$j, \"expected\": \"true\"},"
-        $ns at $t "$p($val) send $val"
-	}
-    set t [expr $t + 3]
-}
-
-incr t
-#$ns at 2 "$p(2) send"
-$ns at $t "finish"
 
 puts "running ns"
 $ns run
