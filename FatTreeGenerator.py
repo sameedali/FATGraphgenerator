@@ -1,4 +1,4 @@
-#/usr/bin/python
+# /usr/bin/python
 import math
 import pprint
 import random
@@ -6,7 +6,7 @@ import os
 import commands
 
 # Define k for the k - array FAT tree topology || Assumes k is even
-k = 4;
+k = 4
 
 # Define the link bandwidths & delays
 endHost_to_edge_switch_bandwidth = 0.1
@@ -21,22 +21,22 @@ aggregator_switch_to_core_switch_delay = 0.025
 # compute the FAT tree properties
 order_of_FAT_tree = k
 number_of_pods = k
-num_of_endhosts = (k*k*k)/4
+num_of_endhosts = (k * k * k) / 4
 
-number_of_hosts_under_edge_switch = k/2
+number_of_hosts_under_edge_switch = k / 2
 
-number_of_endHosts_per_pod = int(math.pow((k/2),2))
+number_of_endHosts_per_pod = int(math.pow((k / 2), 2))
 
-number_of_endHosts = int(math.pow(k,3)/4)
+number_of_endHosts = int(math.pow(k, 3) / 4)
 
-number_of_edge_switches_per_pod = int(k/2)
+number_of_edge_switches_per_pod = int(k / 2)
 
-number_of_edge_switches = number_of_edge_switches_per_pod*number_of_pods
+number_of_edge_switches = number_of_edge_switches_per_pod * number_of_pods
 
-number_of_aggregator_switches = int(k/2)*number_of_pods
+number_of_aggregator_switches = int(k / 2) * number_of_pods
 
-number_of_core_switches = int(math.pow((k/2),2))
-number_of_aggregator_switches_in_pod = int(k/2)
+number_of_core_switches = int(math.pow((k / 2), 2))
+number_of_aggregator_switches_in_pod = int(k / 2)
 
 # Global Data structures to hold nodes and links
 endHosts = []
@@ -48,31 +48,37 @@ endHostToEdgeSwitchLinks = []
 edgeSwitchToAggregatorLinks = []
 aggregatorSwitchToCoreSwitchLinks = []
 
-### define methods ###
+# ## define methods ###
+
+
 def generateEndHosts(nodeIndex):
     for endHostIndex in range(0, number_of_endHosts):
-        endHosts.append({'node': "n"+ str(nodeIndex), 'type': "endHost"})
+        endHosts.append({'node': "n" + str(nodeIndex), 'type': "endHost"})
         nodeIndex += 1
     return nodeIndex
+
 
 def generateEdgeSwitches(nodeIndex):
     print "generateEdgeSwitches"
     for edgeSwitchIndex in range(0, number_of_edge_switches):
-        edgeSwitchs.append({'node': "n"+ str(nodeIndex), 'type': "edgeSwitch"})
+        edgeSwitchs.append({'node': "n" + str(nodeIndex), 'type': "edgeSwitch"})
         nodeIndex += 1
     return nodeIndex
+
 
 def generateAggregatorSwitches(nodeIndex):
     for aggregatorSwitchIndex in range(0, number_of_aggregator_switches):
-        aggregatorSwitchs.append({'node': "n"+ str(nodeIndex), 'type': "aggregatorSwitch"})
+        aggregatorSwitchs.append({'node': "n" + str(nodeIndex), 'type': "aggregatorSwitch"})
         nodeIndex += 1
     return nodeIndex
 
+
 def generateCoreSwitchs(nodeIndex):
     for coreSwitchIndex in range(0, number_of_core_switches):
-        coreSwitches.append({'node': "n"+ str(nodeIndex), 'type': "coreSwitch"})
+        coreSwitches.append({'node': "n" + str(nodeIndex), 'type': "coreSwitch"})
         nodeIndex += 1
     return nodeIndex
+
 
 # DEFINE LINKS
 def generateEndHostToEdgesSwitchLinks():
@@ -80,13 +86,13 @@ def generateEndHostToEdgesSwitchLinks():
     edgeSwitchIndex = 0
     for endHost in endHosts:
         endHostToEdgeSwitchLinks.append({'start': endHost['node'], 'end': edgeSwitchs[edgeSwitchIndex]['node'], "bandwidth": endHost_to_edge_switch_bandwidth})
-        if (count%(number_of_edge_switches_per_pod) == 0):
+        if (count % (number_of_edge_switches_per_pod) == 0):
             edgeSwitchIndex = edgeSwitchIndex + 1
         count += 1
     return
 
-def generateEdgesSwitchToAggregatorLinks():
 
+def generateEdgesSwitchToAggregatorLinks():
     pod_edge_switch_list = []
     pod_aggregate_list = []
     tmp = []
@@ -95,7 +101,7 @@ def generateEdgesSwitchToAggregatorLinks():
     for edgeSwitch in edgeSwitchs:
         tmp.append(edgeSwitch)
         count += 1
-        if (count%number_of_edge_switches_per_pod == 0):
+        if (count % number_of_edge_switches_per_pod == 0):
             pod_edge_switch_list.append(tmp)
             tmp = []
     tmp = []
@@ -104,7 +110,7 @@ def generateEdgesSwitchToAggregatorLinks():
     for aggregatorSwitch in aggregatorSwitchs:
         tmp.append(aggregatorSwitch)
         count += 1
-        if(count%number_of_aggregator_switches_in_pod == 0):
+        if(count % number_of_aggregator_switches_in_pod == 0):
             pod_aggregate_list.append(tmp)
             tmp = []
     # concat the above lists to make pods
@@ -116,6 +122,7 @@ def generateEdgesSwitchToAggregatorLinks():
                 edgeSwitchToAggregatorLinks.append({"start": edge_switch['node'], "end": aggregator_switch['node'], "bandwidth": edge_switch_to_aggregator_switch_bandwidth})
     return
 
+
 def generateAggregatorSwitchToCoreSwitchLinks():
     pod_aggregate_list = []
     tmp = []
@@ -124,20 +131,21 @@ def generateAggregatorSwitchToCoreSwitchLinks():
     for aggregatorSwitch in aggregatorSwitchs:
         tmp.append(aggregatorSwitch)
         count += 1
-        if(count%number_of_aggregator_switches_in_pod == 0):
+        if(count % number_of_aggregator_switches_in_pod == 0):
             pod_aggregate_list.append(tmp)
             tmp = []
     # generate links
     for pod_aggregate_switches in pod_aggregate_list:
-        core_switches_per_aggregate_switch = math.floor(number_of_core_switches/len(pod_aggregate_switches))
+        core_switches_per_aggregate_switch = math.floor(number_of_core_switches / len(pod_aggregate_switches))
         coreSwitchIndex = 0
         pod_count = 0
         while coreSwitchIndex < len(coreSwitches):
             aggregatorSwitchToCoreSwitchLinks.append({'start': pod_aggregate_switches[pod_count]['node'], 'end': coreSwitches[coreSwitchIndex]['node'], "bandwidth": aggregator_switch_to_core_switch_bandwidth})
             coreSwitchIndex += 1
-            if (coreSwitchIndex%core_switches_per_aggregate_switch == 0):
+            if (coreSwitchIndex % core_switches_per_aggregate_switch == 0):
                 pod_count += 1
     return
+
 
 # add the backward links for a given list of links
 def addReverseLinks(linkList):
@@ -147,10 +155,11 @@ def addReverseLinks(linkList):
     linkList.extend(tmp)
     return linkList
 
+
 def convertToTXTFormat(nodeIndex):
-    res = open('out.txt','w')
-    for node in range(0,nodeIndex):
-        res.write(str(node)+'\n')
+    res = open('out.txt', 'w')
+    for node in range(0, nodeIndex):
+        res.write(str(node) + '\n')
     res.write('Links\n')
     links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
     count = 0
@@ -159,82 +168,85 @@ def convertToTXTFormat(nodeIndex):
         count += 1
         res.write(link['end'][1:] + " " + link['start'][1:] + " " + str(count) + " " + str(link['bandwidth']) + "\n")
         count += 1
-    res.close();
+    res.close()
     return
+
 
 # method for geenrating the .tcl file
 def convertToTCLFormat(nodeIndex):
-    res = open('out.tcl','w')
+    res = open('out.tcl', 'w')
 
     res.write("source template.tcl\n\n")
-    res.write("# opening output files\n");
-    res.write("set nf [open out.nam w]\n$ns namtrace-all $nf\n\n");
+    res.write("# opening output files\n")
+    res.write("set nf [open out.nam w]\n$ns namtrace-all $nf\n\n")
 
-    res.write("# defining finish procedure\n");
-    res.write("proc finish {} {\n\tglobal ns nf\n\t$ns flush-trace\n\tclose $nf\n\texit 0\n}\n\n");
+    res.write("# defining finish procedure\n")
+    res.write("proc finish {} {\n\tglobal ns nf\n\t$ns flush-trace\n\tclose $nf\n\texit 0\n}\n\n")
 
     # creating nodes
-    res.write("# defining link properties\n");
-    res.write("set edge_link "+str(endHost_to_edge_switch_bandwidth*1000)+"Mb\nset agg_link "+str(edge_switch_to_aggregator_switch_bandwidth*1000)+"Mb\nset core_link "+str(aggregator_switch_to_core_switch_bandwidth*1000)+"Mb\n\n")
-    res.write("set edge_delay "+str(endHost_to_edge_switch_delay)+"ms\nset agg_delay  "+str(edge_switch_to_aggregator_switch_delay)+"ms\nset core_delay "+str(aggregator_switch_to_core_switch_delay)+"ms\n\n"); 
-    res.write("set num_hosts "+str(num_of_endhosts)+"\nset num_nodes "+str(nodeIndex)+"\n\n"); 
+    res.write("# defining link properties\n")
+    res.write("set edge_link " + str(endHost_to_edge_switch_bandwidth * 1000) + "Mb\nset agg_link " + str(edge_switch_to_aggregator_switch_bandwidth * 1000) + "Mb\nset core_link " + str(aggregator_switch_to_core_switch_bandwidth * 1000) + "Mb\n\n")
+    res.write("set edge_delay " + str(endHost_to_edge_switch_delay) + "ms\nset agg_delay  " + str(edge_switch_to_aggregator_switch_delay) + "ms\nset core_delay " + str(aggregator_switch_to_core_switch_delay) + "ms\n\n")
+    res.write("set num_hosts " + str(num_of_endhosts) + "\nset num_nodes " + str(nodeIndex) + "\n\n")
 
-    res.write("# creating nodes\n");
-    res.write("for { set i 0 } { $i <= $num_nodes } { incr i } {\n    set n($i) [$ns node]\n}\n\n");
+    res.write("# creating nodes\n")
+    res.write("for { set i 0 } { $i <= $num_nodes } { incr i } {\n    set n($i) [$ns node]\n}\n\n")
 
     # defining links
-    res.write("# creating links\n");
+    res.write("# creating links\n")
     links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
     for link in links:
-        res.write("$ns duplex-link $n("+link['start'][1:]+") $n("+link['end'][1:]+") $edge_link $edge_delay DropTail\n");
+        res.write("$ns duplex-link $n(" + link['start'][1:] + ") $n(" + link['end'][1:] + ") $edge_link $edge_delay DropTail\n")
 
     # writing link array1
-    res.write("\n# creating link arrays\n");
-    index = 0;
-    res.write("array set links1 {");
+    res.write("\n# creating link arrays\n")
+    index = 0
+    res.write("array set links1 {")
     for link in links:
-        res.write(" "+str(index)+" "+link['start'][1:]);
+        res.write(" " + str(index) + " " + link['start'][1:])
         index += 1
-        res.write(" "+str(index)+" "+link['end'][1:]);
+        res.write(" " + str(index) + " " + link['end'][1:])
         index += 1
-    res.write("}\n");
+    res.write("}\n")
 
     # writing link array2
-    index = 0;
-    res.write("array set links2 {");
+    index = 0
+    res.write("array set links2 {")
     for link in links:
-        res.write(" "+str(index)+" "+link['end'][1:]);
+        res.write(" " + str(index) + " " + link['end'][1:])
         index += 1
-        res.write(" "+str(index)+" "+link['start'][1:]);
+        res.write(" " + str(index) + " " + link['start'][1:])
         index += 1
-    res.write("}\n");
+    res.write("}\n")
 
     # writing other data
-    res.write("set lnk_size [array size links1]\n\n");
-    res.write("# monitoring links\n");
+    res.write("set lnk_size [array size links1]\n\n")
+    res.write("# monitoring links\n")
     res.write("for { set i 0 } { $i < [expr $lnk_size] } { incr i } {\n\tset qmon_ab($i) [$ns monitor-queue $n($links1($i)) $n($links2($i)) \"\"]\n\tset bing_ab($i) [$qmon_ab($i) get-bytes-integrator];\n\tset ping_ab($i) [$qmon_ab($i) get-pkts-integrator];\n\tset fileq($i) \"qmon.trace\"\n\tset futil_name($i) \"qmon.util\"\n\tset floss_name($i) \"qmon.loss\"\n\tset fqueue_name($i) \"qmon.queue\"\n\n\
     append fileq($i) \"$links1($i)\"\n\tappend fileq($i) \"$links2($i)\"\n\tappend futil_name($i) \"$links1($i)\"\n\tappend futil_name($i) \"$links2($i)\"\n\tappend floss_name($i) \"$links1($i)\"\n\tappend floss_name($i) \"$links2($i)\"\n\tappend fqueue_name($i) \"$links1($i)\"\n\tappend fqueue_name($i) \"$links2($i)\"\n\n\
     set fq_mon($i) [open $fileq($i) w]\n\tset f_util($i) [open $futil_name($i) w]\n\tset f_loss($i) [open $floss_name($i) w]\n\tset f_queue($i) [open $fqueue_name($i) w]\n\n\
     $ns at $STATS_START  \"$qmon_ab($i) reset\"\n\t$ns at $STATS_START  \"$bing_ab($i) reset\"\n\t$ns at $STATS_START  \"$ping_ab($i) reset\"\n\tset buf_bytes [expr 0.00025 * 1000 / 1 ]\n\
-    $ns at [expr $STATS_START+$STATS_INTR] \"linkDump [$ns link $n($links1($i)) $n($links2($i))] $bing_ab($i) $ping_ab($i) $qmon_ab($i) $STATS_INTR A-B $fq_mon($i) $f_util($i) $f_loss($i) $f_queue($i) $buf_bytes\"\n}\n");
+    $ns at [expr $STATS_START+$STATS_INTR] \"linkDump [$ns link $n($links1($i)) $n($links2($i))] $bing_ab($i) $ping_ab($i) $qmon_ab($i) $STATS_INTR A-B $fq_mon($i) $f_util($i) $f_loss($i) $f_queue($i) $buf_bytes\"\n}\n")
 
     # writing Ping agent to the .tcl file
-    res.write("\n\nset num_nodes "+str(nodeIndex)+";\nset num_agents 0\nfor { set i 0 } { $i < $num_nodes } { incr i } {\n\tfor {set j 0} {$j < $num_nodes} {incr j} {\n\t\tset p($num_agents) [new Agent/Ping]\n\t\t$ns attach-agent $n($i) $p($num_agents)\n\t\tincr num_agents\n\t}\n}\n");
-    res.write("\n\nset ite 0\nset jStart 0\nfor { set i 0 } { $i < "+str(nodeIndex)+" } { incr i } {\n\tfor { set j $jStart } { $j < "+str(nodeIndex+1)+" } { incr j } {\n\t\tif { $j == "+str(nodeIndex)+" } {\n\t\t\tset ite [expr $ite + $i + 1]\n\t\t\tcontinue\n\t\t}\n\n\t\t$ns connect $p($ite) $p([expr "+str(nodeIndex)+"*$j + $i])\n\t\tincr ite\n\t}\n\tincr jStart\n}\n\n");
-    
-    # writing Raza agent to the .tcl file
-    res.write("set num_agents1 $num_agents\nfor { set i 0 } { $i < $num_nodes } { incr i } {\n\tfor {set j 0} {$j < $num_nodes} {incr j} {\n\t\tset p($num_agents) [new Agent/Raza]\n\t\t$ns attach-agent $n($i) $p($num_agents)\n\t\tincr num_agents\n\t}\n}\n\n");
-    res.write("set ite $num_agents1\nset jStart 0\nfor { set i 0 } { $i < "+str(nodeIndex)+" } { incr i } {\n\tfor { set j $jStart } { $j < "+str(nodeIndex+1)+" } { incr j } {\n\t\tif { $j == "+str(nodeIndex)+" } {\n\t\t\tset ite [expr $ite + $i + 1]\n\t\t\tcontinue\n\t\t}\n\t\t$ns connect $p($ite) $p([expr "+str(nodeIndex)+"*$j + $i + $num_agents1])\n\t\tincr ite\n\t}\n\tincr jStart\n}\n");
+    res.write("\n\nset num_nodes " + str(nodeIndex) + ";\nset num_agents 0\nfor { set i 0 } { $i < $num_nodes } { incr i } {\n\tfor {set j 0} {$j < $num_nodes} {incr j} {\n\t\tset p($num_agents) [new Agent/Ping]\n\t\t$ns attach-agent $n($i) $p($num_agents)\n\t\tincr num_agents\n\t}\n}\n")
+    res.write("\n\nset ite 0\nset jStart 0\nfor { set i 0 } { $i < " + str(nodeIndex) + " } { incr i } {\n\tfor { set j $jStart } { $j < " + str(nodeIndex + 1) + " } { incr j } {\n\t\tif { $j == " + str(nodeIndex) + " } {\n\t\t\tset ite [expr $ite + $i + 1]\n\t\t\tcontinue\n\t\t}\n\n\t\t$ns connect $p($ite) $p([expr " + str(nodeIndex) + "*$j + $i])\n\t\tincr ite\n\t}\n\tincr jStart\n}\n\n")
 
-    res.write("\n\nputs \"running ns\"\n$ns run");
-    res.close();
+    # writing Raza agent to the .tcl file
+    res.write("set num_agents1 $num_agents\nfor { set i 0 } { $i < $num_nodes } { incr i } {\n\tfor {set j 0} {$j < $num_nodes} {incr j} {\n\t\tset p($num_agents) [new Agent/Raza]\n\t\t$ns attach-agent $n($i) $p($num_agents)\n\t\tincr num_agents\n\t}\n}\n\n")
+    res.write("set ite $num_agents1\nset jStart 0\nfor { set i 0 } { $i < " + str(nodeIndex) + " } { incr i } {\n\tfor { set j $jStart } { $j < " + str(nodeIndex + 1) + " } { incr j } {\n\t\tif { $j == " + str(nodeIndex) + " } {\n\t\t\tset ite [expr $ite + $i + 1]\n\t\t\tcontinue\n\t\t}\n\t\t$ns connect $p($ite) $p([expr " + str(nodeIndex) + "*$j + $i + $num_agents1])\n\t\tincr ite\n\t}\n\tincr jStart\n}\n")
+
+    res.write("\n\nputs \"running ns\"\n$ns run")
+    res.close()
     return
 
+
 def getReverseLinks(links):
-    result = [];
+    result = []
     for link in links:
-        result.append({'start': link['end'], 'end': link['start'], 'bandwidth': link['bandwidth']});
+        result.append({'start': link['end'], 'end': link['start'], 'bandwidth': link['bandwidth']})
     return result
+
 
 # function to divide a list into a number of lists
 def slice_list(input, size):
@@ -252,90 +264,92 @@ def slice_list(input, size):
             remain -= 1
     return result
 
+
 # funciton fo greating mapping
 def generateMapping():
-    res = open("mapping.txt", 'w');   # opening file
+    res = open("mapping.txt", 'w')   # opening file
 
     links1 = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
-    links2 = getReverseLinks(links1);
+    links2 = getReverseLinks(links1)
 
     # creating the links list
-    links = [];
+    links = []
     for i in range(0, len(links1)):
-        links.append(links1[i]);
-        links.append(links2[i]);
+        links.append(links1[i])
+        links.append(links2[i])
 
     # assigning ids to links
-    id = 0;
+    id = 0
     for link in links:
         link['id'] = str(id)
         id += 1
 
-    ids = [];           # list that keeps track of links that belong to nodes under consideration
-    listoflinks = [];    # list to store links of nodes
+    ids = []           # list that keeps track of links that belong to nodes under consideration
+    listoflinks = []    # list to store links of nodes
 
     for i in range(0, num_of_endhosts, number_of_hosts_under_edge_switch):
         # fetching original list
         temps = list(links)
 
         # clearing temporary list
-        listoflinks = list();
-        ids = list();
+        listoflinks = list()
+        ids = list()
 
         for k in range(0, number_of_hosts_under_edge_switch):
-            listoflinks.append("");
+            listoflinks.append("")
 
         # giving nodes their own links and putting their ids into list "ids"
         for temp in temps:
             for j in range(0, number_of_hosts_under_edge_switch):
                 if ("n" + str(i + j)) == temp['start'] or ("n" + str(i + j)) == temp['end']:
-                    ids.append(temp['id']);
+                    ids.append(temp['id'])
                     listoflinks[j] += (temp['id'] + " ")
 
         # deleting links from temporary list of links
         for _id in ids:
-            del(temps[int(_id)]);
+            del(temps[int(_id)])
 
         # shuffling the rest of the links
-        random.shuffle(temps);
+        random.shuffle(temps)
 
         # divinding the list of "links" into k/2 hosts
-        parts = list();
-        parts = slice_list(temps, number_of_hosts_under_edge_switch);
+        parts = list()
+        parts = slice_list(temps, number_of_hosts_under_edge_switch)
 
         # writing the contents of parts of temps (temporary list of links) to listoflinks (another temporary list)
         for k in range(0, len(parts)):
-            part = parts[k];
+            part = parts[k]
             for link_in_part in part:
                 listoflinks[k] += (link_in_part['id'] + " ")
 
         # writing data to the file
         for singlelist in listoflinks:
-            res.write(singlelist);
-            res.write("\n");
+            res.write(singlelist)
+            res.write("\n")
 
     # closing and returning
-    res.close();
+    res.close()
 
     print "graphs creation started"
-    createGraphs();
+    createGraphs()
     print "graphs creation completed"
-    return;
+    return
+
 
 def createGraphs():
-    status, output = commands.getstatusoutput("find . -name qmon.util\*");
-    mylist = output.split("\n");
-    
-    plotter = open("qmon-util-plotter.gp", 'w');    
+    status, output = commands.getstatusoutput("find . -name qmon.util\*")
+    mylist = output.split("\n")
+
+    plotter = open("qmon-util-plotter.gp", 'w')
     for filename in mylist:
         filename = filename[2:]
-        
-        plotter.write("set terminal postscript color eps enhanced\n");
-        plotter.write("set output \"plot-qmon-util"+filename[9:]+".ps\"\n");
+
+        plotter.write("set terminal postscript color eps enhanced\n")
+        plotter.write("set output \"plot-qmon-util" + filename[9:] + ".ps\"\n")
 
         plotter.write("set title \"Plot of Link Utilization\"\nset ylabel \"Link Utilization\"\nset xlabel \"Number of RTTs\" # 0,0.5\"\nset xtics 10\n")
-        plotter.write("plot \""+filename+"\" title \"link utilization\" with lines,");
-        os.system("gnuplot qmon-util-plotter.gp");
+        plotter.write("plot \"" + filename + "\" title \"link utilization\" with lines,")
+        os.system("gnuplot qmon-util-plotter.gp")
     return
 
 
@@ -388,8 +402,8 @@ def main():
     print 'task complete.'
 
     print "Generating Mapping"
-    generateMapping();
-    print 'task complete.';
+    generateMapping()
+    print 'task complete.'
     return
 
 if __name__ == '__main__':
