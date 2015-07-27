@@ -269,77 +269,88 @@ def slice_list(input, size):
 
 # funciton for greating mapping
 def generateMapping():
-    res = open("mapping.txt", 'w')   # opening file
 
-    links1 = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
-    links2 = getReverseLinks(links1)
+    forwardLinks = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
+    reverseLinks = getReverseLinks(forwardLinks)
 
     # creating the links list
-    links = []
-    for i in range(0, len(links1)):
-        links.append(links1[i])
-        links.append(links2[i])
+    allLinks = []
+    for i in range(0, len(forwardLinks)):
+        allLinks.append(forwardLinks[i])
+        allLinks.append(reverseLinks[i])
 
     # assigning ids to links
     id = 0
-    for link in links:
+    for link in allLinks:
         link['id'] = str(id)
         id += 1
 
-    ids = []                       # list that keeps track of links that belong to nodes under consideration
-    listoflinks = []               # list to store links of nodes
+    # define all nodes
+    allNodes = endHosts + edgeSwitchs + aggregatorSwitchs + coreSwitches
 
-    linkIndex = 0                  # variable for indexing of links
-    for i in range(0, num_of_endhosts, number_of_hosts_under_edge_switch):
-        # fetching original list
-        temps = list(links)
+    # make nodeListLinks
+    nodeListLinks = []
+    for nodes in endHosts:
+        nodeListLinks.append(" ")
 
-        # clearing temporary list
-        listoflinks = list()
-        ids = list()
+    # make sure in each pod the endHost has closest link
+    ids = []
+    for nodeId in range(0, len(nodeListLinks)):
+        for link in allLinks:
+            if (link['start'] == 'n' + str(nodeId)):
+                nodeListLinks[nodeId] += link['id'] + " "
+                ids.append(link['id'])
 
-        for k in range(0, number_of_hosts_under_edge_switch):
-            listoflinks.append("")
+    # remove these links form allLinks
+    for _ids in ids:
+        for link in allLinks:
+            if (link['id'] == _ids):
+                del link
 
-        # giving nodes their own links and putting their ids into list "ids"
-        for temp in temps:
-            for j in range(0, number_of_hosts_under_edge_switch):
-                if ("n" + str(i + j)) == temp['start'] or ("n" + str(i + j)) == temp['end']:
-                    ids.append(temp['id'])
-                    listoflinks[j] += (temp['id'] + " ")
+    # distribute rest of the links in each pod
+    podLinks = []
+    for it in range(0, number_of_pods):
+        if(len(podLinks) <= it):
+            podLinks.append([])
+        for link in allLinks:
+            podLinks[it].append(link)
 
-        # deleting links from temporary list of links
-        for _id in ids:
-            del(temps[int(_id)])
+    # shuffle links
+    for podLink in podLinks:
+        random.shuffle(podLink)
 
-        # shuffling the rest of the links
-        random.shuffle(temps)
+    # associate rest of pod nodes with podLinks
+    number_of_endhosts_per_pod = len(endHosts) / number_of_pods
 
-        # divinding the list of "links" into k/2 hosts
-        parts = list()
-        parts = slice_list(temps, number_of_hosts_under_edge_switch)
+    iter = 0
+    podIndex = 0
+    for podLink in podLinks:
+        i = number_of_endhosts_per_pod * podIndex
+        for link in podLink:
+            nodeListLinks[i] += link['id'] + " "
+            i += 1
+            if i >= ((number_of_endhosts_per_pod * podIndex) + (number_of_endhosts_per_pod)):
+                i = number_of_endhosts_per_pod * podIndex
+        podIndex += 1
 
-        # writing the contents of parts of temps (temporary list of links) to listoflinks (another temporary list)
-        for k in range(0, len(parts)):
-            part = parts[k]
-            for link_in_part in part:
-                listoflinks[k] += (link_in_part['id'] + " ")
+    pprint.pprint(nodeListLinks)
 
-        # writing data to the file
-        for singlelist in listoflinks:
-            res.write(str(linkIndex))
-            res.write(": ")
-            res.write(singlelist)
-            res.write("\n")
-            linkIndex += 1           # incrementing link index
-
+    # writing data to the file
+    res = open("mapping.txt", 'w')   # opening file
+    nodeIndex = 0
+    for nodeLink in nodeListLinks:
+        res.write(str(nodeIndex))
+        res.write(": ")
+        res.write(nodeLink)
+        res.write("\n")
+        # incrementing link index
+        nodeIndex += 1
     # closing and returning
     res.close()
     return
 
+
 # function for creating graphs from qmon.util* files
-
-
 def createGraphs():
     status, output = commands.getstatusoutput("find . -name qmon.util\*")
     mylist = output.split("\n")
@@ -396,6 +407,8 @@ def main():
     generateAggregatorSwitchToCoreSwitchLinks()
     print "Aggregator Switch To Core Switch Links generated"
     pprint.pprint(aggregatorSwitchToCoreSwitchLinks)
+
+    print "Total number of links: ", 2 * len(endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks)
 
     print "Writing TXT file"
     convertToTXTFormat(nodeIndex)
