@@ -6,7 +6,7 @@ import os
 import commands
 
 # Define k for the k - array FAT tree topology || Assumes k is even
-k = 4
+k = 8
 
 # Define the link bandwidths & delays
 endHost_to_edge_switch_bandwidth = 0.1
@@ -297,14 +297,14 @@ def generateMapping():
     ids = []
     for nodeId in range(0, len(nodeListLinks)):
         for link in allLinks:
-            if (link['start'] == 'n' + str(nodeId)):
+            if ((link['start'] == 'n' + str(nodeId)) or (link['end'] == 'n' + str(nodeId))):
                 nodeListLinks[nodeId] += link['id'] + " "
                 ids.append(link['id'])
 
     # remove these links form allLinks
-    for _ids in ids:
+    for id in ids:
         for link in allLinks:
-            if (link['id'] == _ids):
+            if (link['id'] == id):
                 del link
 
     # distribute rest of the links in each pod
@@ -322,6 +322,8 @@ def generateMapping():
     # associate rest of pod nodes with podLinks
     number_of_endhosts_per_pod = len(endHosts) / number_of_pods
 
+    print "number_of_endhosts_per_pod:", number_of_endhosts_per_pod
+
     iter = 0
     podIndex = 0
     for podLink in podLinks:
@@ -332,8 +334,6 @@ def generateMapping():
             if i >= ((number_of_endhosts_per_pod * podIndex) + (number_of_endhosts_per_pod)):
                 i = number_of_endhosts_per_pod * podIndex
         podIndex += 1
-
-    pprint.pprint(nodeListLinks)
 
     # writing data to the file
     res = open("mapping.txt", 'w')   # opening file
@@ -377,36 +377,36 @@ def main():
     # generate the nodes
     nodeIndex = generateEndHosts(nodeIndex)
     print "Endhost generation complete"
-    pprint.pprint(endHosts)
+    # pprint.pprint(endHosts)
     print "number_of_endHosts::", len(endHosts)
 
     nodeIndex = generateEdgeSwitches(nodeIndex)
     print "edgeSwitchs generation complete"
-    pprint.pprint(edgeSwitchs)
+    # pprint.pprint(edgeSwitchs)
     print "number_of_edge_switches::", len(edgeSwitchs)
 
     nodeIndex = generateAggregatorSwitches(nodeIndex)
     print "aggregatorSwitchs generation complete"
-    pprint.pprint(aggregatorSwitchs)
+    # pprint.pprint(aggregatorSwitchs)
     print "number_of_aggregator_switches::", len(aggregatorSwitchs)
 
     nodeIndex = generateCoreSwitchs(nodeIndex)
     print "coreSwitches generation complete"
-    pprint.pprint(coreSwitches)
+    # pprint.pprint(coreSwitches)
     print "number_of_core_switches::", len(coreSwitches)
 
     # generate the links
     generateEndHostToEdgesSwitchLinks()
     print "EndNode To Edges Switch Links generated"
-    pprint.pprint(endHostToEdgeSwitchLinks)
+    # pprint.pprint(endHostToEdgeSwitchLinks)
 
     generateEdgesSwitchToAggregatorLinks()
     print "Edge Switch To Aggregator Switch Links generated"
-    pprint.pprint(edgeSwitchToAggregatorLinks)
+    # pprint.pprint(edgeSwitchToAggregatorLinks)
 
     generateAggregatorSwitchToCoreSwitchLinks()
     print "Aggregator Switch To Core Switch Links generated"
-    pprint.pprint(aggregatorSwitchToCoreSwitchLinks)
+    # pprint.pprint(aggregatorSwitchToCoreSwitchLinks)
 
     print "Total number of links: ", 2 * len(endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks)
 
