@@ -3,7 +3,7 @@ language: python
 python:
         - 2.7
 install:
-    - pip install pprint
+    - pip install pprintpp
 
 script:
     - cd src
