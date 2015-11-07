@@ -1,5 +1,4 @@
-![Build Status](https://travis-ci.org/sameedali/FATGraphgenerator.svg)](https://travis-ci.org/sameedali/FATGraphgenerator)
-
+[![Build Status](https://travis-ci.org/sameedali/FATGraphgenerator.svg?branch=master)](https://travis-ci.org/sameedali/FATGraphgenerator)
 
 FatTreeGenerator
 =================
