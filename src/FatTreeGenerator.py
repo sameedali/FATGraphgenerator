@@ -17,6 +17,7 @@ aggregator_switch_to_core_switch_bandwidth = 0.1
 endHost_to_edge_switch_delay = 0.025
 edge_switch_to_aggregator_switch_delay = 0.025
 aggregator_switch_to_core_switch_delay = 0.025
+
 # Donot edit anything below here #
 # compute the FAT tree properties
 order_of_FAT_tree = k
@@ -345,6 +346,178 @@ def slice_list(input, size):
     return result
 
 
+#TODO: test function for greating mapping per pod bottom up
+def generateMappingPerPodBottomUp(give_nodes_own_links):
+    res = open("mapping.txt", 'w')   # opening file
+
+    all_links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
+    print "all links size:", len(all_links)
+
+    # will contain dicts like :: {"node_id": , "list_of_links": []}
+    link_allocations = []
+
+    for node in endHosts:
+        link_allocations.append({"node_id": node['node'][1:], "list_of_links": []})
+
+    # giving nodes their own links and putting their ids into list "ids"
+    if give_nodes_own_links is True:
+        for link in all_links:
+            # assuming counting starts from 0 and number_of_endHosts are the first n values
+            for j in range(0, number_of_endHosts):
+                if ("n" + str(j)) == link['start'] or ("n" + str(j)) == link['end']:
+                    # find item in allocations and append to it
+                    for item in link_allocations:
+                        if(item['node_id'] == str(j)):
+                            item['list_of_links'].append(link)
+
+    # allocate the links to each pod
+    for i in range(0, num_of_endhosts, number_of_endHosts_per_pod):
+        # fetching original list
+        temp_all_links = list(all_links)
+
+        # find links already allocated to pod
+        allocated_links = []
+        for item in link_allocations:
+            for j in range(i, i + number_of_endHosts_per_pod):
+                if (str(j) == item['node_id']):
+                    allocated_links.extend(item['list_of_links'])
+
+        # remove allocated_link from temp_all_links
+        for allocated_link in allocated_links:
+            temp_all_links.remove(allocated_link)
+
+        # print "temp_all_links size ::", len(temp_all_links)
+        # print "allocated links"
+        # pprint.pprint(allocated_links)
+
+        # get only links inside the pod
+        pod_links = []
+
+        # end all links end hosts connect to
+        # add all switch id end hosst connect to
+        tor_list = []
+        for link in temp_all_links:
+            for j in range(i, i + number_of_endHosts_per_pod):
+                if link['start'] == ("n" + str(j)):
+                    pod_links.append(link)
+                    tor_list.append(link)
+                if link['end'] == ("n" + str(j)):
+                    pod_links.append(link)
+
+        # add all links lead to the aggs from the tor
+        # agg_list = []
+        for tor_link in tor_list:
+            for link in temp_all_links:
+                if tor_link['end'] == link['start']:
+                    pod_links.append(link)
+                    # agg_list.append(link)
+                    # add reverse link
+                    for lnk in temp_all_links:
+                        if lnk['start'] == link['end'] and lnk['start'] == link['start']:
+                            pod_links.append(lnk)
+
+        # remove duplicates
+        temp = []
+        for link1 in pod_links:
+            for link2 in pod_links:
+                if link1 not in temp:
+                    temp.append(link1)
+        pod_links = temp
+
+        # shuffling the rest of the links
+        random.shuffle(pod_links)
+
+        # divinding the list of "links" into k/2 hosts
+        equally_divided_lists_of_links = slice_list(pod_links, number_of_endHosts_per_pod)
+
+        for item in link_allocations:
+            for j in range(i, i + number_of_endHosts_per_pod):
+                if (str(j) == item['node_id']):
+                    item['list_of_links'].extend(equally_divided_lists_of_links[j % number_of_endHosts_per_pod])
+
+    # writing data to the file
+    for item in link_allocations:
+        res.write(str(item['node_id']))
+        res.write(":")
+        for link in item['list_of_links']:
+            res.write(" ")
+            res.write(str(link['id']))
+        res.write("\n")
+
+    # closing and returning
+    res.close()
+    return
+
+
+# function for greating mapping per pod bottom up
+def generateMappingPerPod(give_nodes_own_links):
+    res = open("mapping.txt", 'w')   # opening file
+
+    all_links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
+    print "all links size:", len(all_links)
+
+    # will contain dicts like :: {"node_id": , "list_of_links": []}
+    link_allocations = []
+
+    for node in endHosts:
+        link_allocations.append({"node_id": node['node'][1:], "list_of_links": []})
+
+    # giving nodes their own links and putting their ids into list "ids"
+    if give_nodes_own_links is True:
+        for link in all_links:
+            # assuming counting starts from 0 and number_of_endHosts are the first n values
+            for j in range(0, number_of_endHosts):
+                if ("n" + str(j)) == link['start'] or ("n" + str(j)) == link['end']:
+                    # find item in allocations and append to it
+                    for item in link_allocations:
+                        if(item['node_id'] == str(j)):
+                            item['list_of_links'].append(link)
+
+    # allocate the links to each pod
+    for i in range(0, num_of_endhosts, number_of_endHosts_per_pod):
+        # fetching original list
+        temp_all_links = list(all_links)
+
+        # find links already allocated to pod
+        allocated_links = []
+        for item in link_allocations:
+            for j in range(i, i + number_of_endHosts_per_pod):
+                if (str(j) == item['node_id']):
+                    allocated_links.extend(item['list_of_links'])
+
+        # remove allocated_link from temp_all_links
+        for allocated_link in allocated_links:
+            temp_all_links.remove(allocated_link)
+
+        # print "temp_all_links size ::", len(temp_all_links)
+        # print "allocated links"
+        # pprint.pprint(allocated_links)
+
+        # shuffling the rest of the links
+        random.shuffle(temp_all_links)
+
+        # divinding the list of "links" into k/2 hosts
+        equally_divided_lists_of_links = slice_list(temp_all_links, number_of_endHosts_per_pod)
+
+        for item in link_allocations:
+            for j in range(i, i + number_of_endHosts_per_pod):
+                if (str(j) == item['node_id']):
+                    item['list_of_links'].extend(equally_divided_lists_of_links[j % number_of_endHosts_per_pod])
+
+    # writing data to the file
+    for item in link_allocations:
+        res.write(str(item['node_id']))
+        res.write(":")
+        for link in item['list_of_links']:
+            res.write(" ")
+            res.write(str(link['id']))
+        res.write("\n")
+
+    # closing and returning
+    res.close()
+    return
+
+
 # funciton for greating mapping
 def generateMapping(give_nodes_own_links):
     res = open("mapping.txt", 'w')   # opening file
@@ -484,8 +657,16 @@ def main():
     convertToTCLFormat()
     print 'task complete.'
 
-    print "Generating Mapping"
-    generateMapping(False)
+    # print "Generating Mapping"
+    # generateMapping(False)
+    # print 'task complete.'
+
+    # print "Generating per pod Mapping"
+    # generateMappingPerPod(False)
+    # print 'task complete.'
+
+    print "Generating per pod Mapping"
+    generateMappingPerPodBottomUp(False)
     print 'task complete.'
     return
 

@@ -1,6 +1,7 @@
 import re
+
 # define k here
-number_of_items_in_division = 2
+number_of_items_in_division = 16
 
 
 def main():
