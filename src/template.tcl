@@ -157,14 +157,19 @@ proc linkDump {link binteg pinteg qmon interval name linkfile util buf_bytes} {
 }
 
 # variables for build_tcp function
+
 $ns rtproto DV
 Agent/rtProto/DV set advertInterval 16
 
 set f_id 0
 set time_tcp 0
 set time_increment 0.0001
-proc build-tcp { n0 n1 startTime } {
+
+proc build-tcp { n0 n1 startTime endTime} {
     global ns
+    global time_tcp
+    global time_increment
+    global f_id
 
     set tcp [new Agent/TCP]
     $ns attach-agent $n0 $tcp
@@ -176,11 +181,17 @@ proc build-tcp { n0 n1 startTime } {
 
     set ftp [new Application/FTP]
     $ftp attach-agent $tcp
-    $ns at $time_tcp "$tcp send"
-    set time_tcp [expr [$time_tcp + $time_increment]]
+    $ns at 0.1 "$tcp tcp_send"
+    set time_tcp [expr $time_tcp + $time_increment]
     $ns at $startTime "$tcp flow_start"
     $ns at $startTime "$ftp start"
+
+#important
+
+    $ns at [expr $endTime + 0.0001] "$tcp flow_end" 
+    $ns at endTime "$ftp stop"
     
+
     $tcp set fid_ $f_id
     incr f_id
     return $tcp
