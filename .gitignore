@@ -1,0 +1,4 @@
+logs/
+*.gp
+*.ps
+out/

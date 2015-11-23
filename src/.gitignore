@@ -1,0 +1,5 @@
+qmon.*
+*.ps
+*.gp
+*.log
+out.*

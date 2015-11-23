@@ -155,7 +155,6 @@ for { set i 0 } { $i < $num_nodes } { incr i } {
 	}
 }
 
-
 set ite 0
 set jStart 0
 for { set i 0 } { $i < 36 } { incr i } {
@@ -174,7 +173,7 @@ for { set i 0 } { $i < 36 } { incr i } {
 set num_agents1 $num_agents
 for { set i 0 } { $i < $num_nodes } { incr i } {
 	for {set j 0} {$j < $num_nodes} {incr j} {
-		set p($num_agents) [new Agent/Raza]
+		set p($num_agents) [new Agent/TCP]
 		$ns attach-agent $n($i) $p($num_agents)
 		incr num_agents
 	}
@@ -194,6 +193,44 @@ for { set i 0 } { $i < 36 } { incr i } {
 	incr jStart
 }
 
+# flows start
+set tcp2 [build-tcp $n(0) $n(8) 1.5 2.8];
+# commenting this block
+#set tcp1 [build-tcp $n(1) $n(9) 1.7 2.7];
+#set tcp1 [build-tcp $n(2) $n(10) 1.9 2.9];
+#set tcp1 [build-tcp $n(3) $n(11) 2.1 3.1];
+#set tcp1 [build-tcp $n(4) $n(12) 2.3 3.3];
+#set tcp1 [build-tcp $n(5) $n(13) 2.5 3.5];
+#set tcp1 [build-tcp $n(6) $n(14) 2.7 3.7];
+#set tcp1 [build-tcp $n(7) $n(15) 2.9 3.9];
+
+set tcp1 [new Agent/TCP]
+$tcp1 set class_ 2
+$ns attach-agent $n(0) $tcp1
+set sink1 [new Agent/TCPSink]
+$ns attach-agent $n(8) $sink1
+$ns connect $tcp1 $sink1
+$tcp1 set fid_ 1
+
+set ftp1 [new Application/FTP]
+$ftp1 attach-agent $tcp1
+$ftp1 set type_ FTP
+
+#$ns at 1 "$tcp1 tcp_send"
+#$ns at 2 "$tcp1 flow_start"
+#$ns at 2 "$ftp1 start"
+#$ns at 3.000000000001 "$tcp1 flow_end"
+#$ns at 3 "$ftp1 stop"
+
+
+#$ns at 7.0 "$tcp1 tcp_send"
+#$ns at 7.5 "$tcp1 flow_start"
+#$ns at 7.5 "$ftp1 start"
+
+#$ns at 8.501 "$tcp1 flow_end"
+#$ns at 8.5 "$ftp1 stop"
 
 puts "running ns"
+
+$ns at 3.53 "finish"
 $ns run

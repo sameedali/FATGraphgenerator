@@ -315,7 +315,7 @@ def convertToTCLFormat():
               + " } {\n\t\t\tset ite [expr $ite + $i + 1]\n\t\t\tcontinue\n\t\t}\n\t\t$ns connect $p($ite) $p([expr "
               + str(nodeIndex)
               + "*$j + $i + $num_agents1])\n\t\tincr ite\n\t}\n\tincr jStart\n}\n")
-    res.write("\n\nputs \"running ns\"\n$ns run")
+    res.write("\n# TODO: start flows herer\n\nputs \"running ns\"\n$ns run")
     res.close()
     return
 
@@ -346,7 +346,7 @@ def slice_list(input, size):
     return result
 
 
-#TODO: test function for greating mapping per pod bottom up
+# TODO: test function for greating mapping per pod bottom up
 def generateMappingPerPodBottomUp(give_nodes_own_links):
     res = open("mapping.txt", 'w')   # opening file
 
