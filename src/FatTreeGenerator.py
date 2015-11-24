@@ -3,6 +3,7 @@ import math
 import pprint
 import random
 import commands
+import sys
 
 # Define k for the k - array FAT tree topology || Assumes k is even
 k = 4
@@ -681,7 +682,9 @@ def start():
 print "================================================================================"
 print "==                         GENERATING TOPOLOGY                                =="
 print "================================================================================"
+
 start()
+
 print "================================================================================"
 
 print "copying files... \n"
