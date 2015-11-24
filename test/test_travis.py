@@ -2,7 +2,7 @@
 import sys
 
 
-def main(argv):
+def main():
     """
     TODO: Main method for travis test
     """
