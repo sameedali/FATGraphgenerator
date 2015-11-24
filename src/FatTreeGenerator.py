@@ -679,13 +679,13 @@ def start():
     # print 'task complete.'
     return
 
-print "================================================================================"
-print "==                         GENERATING TOPOLOGY                                =="
-print "================================================================================"
+print "======================================================================"
+print "==                         GENERATING TOPOLOGY                      =="
+print "======================================================================"
 
 start()
 
-print "================================================================================"
+print "======================================================================="
 
 print "copying files... \n"
 moving_files = commands.getstatusoutput('cp ./mapping.txt ./out.tcl ./createUtilGraph.py ./tcl/template.tcl ./out.txt ../out/')
@@ -702,9 +702,9 @@ if int(deleting_files[0]) != 0:
     sys.exit(1)
 
 # run tests on created files
-print "================================================================================"
-print "==                         RUNNING TESTS                                      =="
-print "================================================================================"
+print "======================================================================"
+print "==                         RUNNING TESTS                            =="
+print "======================================================================"
 print "Make sure to set the vars in the test files before running tests"
 test_result = commands.getstatusoutput('cd ../test/ && python test_mapping.py')
 
@@ -718,6 +718,6 @@ print "test result message::"
 print test_result[1]
 # go back to src
 commands.getstatusoutput('cd ../src')
-print "================================================================================"
-print "================================================================================"
+print "======================================================================="
+print "======================================================================="
 print "Completed."
