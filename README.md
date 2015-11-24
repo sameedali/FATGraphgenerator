@@ -6,7 +6,7 @@ FatTreeGenerator
 This repository contains an k array FAT tree topology generator.
 
 
-A tcl representing the topology or the given k is geenrated on running the python FatTreeGenerator.py script
+A tcl representing the topology or the given k is genrated on running the python FatTreeGenerator.py script
 
 
 
@@ -30,4 +30,4 @@ Example topology:
 Numbering for nodes starts at the end host and continues hierarchically i.e. End hosts then TOR then AGG then core switches.
 
 
-Links are numbered similiarly.
+Links are numbered similiarly stating form the node 0.
