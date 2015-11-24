@@ -6,9 +6,5 @@ install:
     - pip install pprintpp
 
 script:
-    - cd src
-    - python FatTreeGenerator.py
-    - cd ..
     - cd test
-    - python test_mapping.py
-
+    - python test_travis.py
