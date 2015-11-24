@@ -3,3 +3,6 @@ qmon.*
 *.gp
 *.log
 out.*
+mapping.txt
+out.txt
+out.tcl

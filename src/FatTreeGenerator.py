@@ -2,7 +2,6 @@
 import math
 import pprint
 import random
-import os
 import commands
 
 # Define k for the k - array FAT tree topology || Assumes k is even
@@ -189,16 +188,16 @@ def generateAggregatorSwitchToCoreSwitchLinks():
 
 
 def convertToTXTFormat():
+    # write the nodes
     res = open('out.txt', 'w')
     for node in range(0, nodeIndex):
         res.write(str(node) + '\n')
+    # write the links
     res.write('Links\n')
     links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
     count = 0
     for link in links:
         res.write(link['start'][1:] + " " + link['end'][1:] + " " + str(count) + " " + str(link['bandwidth']) + "\n")
-        count += 1
-        res.write(link['end'][1:] + " " + link['start'][1:] + " " + str(count) + " " + str(link['bandwidth']) + "\n")
         count += 1
     res.close()
     return
@@ -217,23 +216,14 @@ def convertToTCLFormat():
 
     # creating nodes
     res.write("# defining link properties\n")
-    res.write("set edge_link "
-              + str(endHost_to_edge_switch_bandwidth * 1000)
-              + "Mb\nset agg_link "
-              + str(edge_switch_to_aggregator_switch_bandwidth * 1000)
-              + "Mb\nset core_link "
-              + str(aggregator_switch_to_core_switch_bandwidth * 1000)
-              + "Mb\n\n")
-    res.write("set edge_delay "
-              + str(endHost_to_edge_switch_delay)
-              + "ms\nset agg_delay  "
-              + str(edge_switch_to_aggregator_switch_delay)
-              + "ms\nset core_delay "
-              + str(aggregator_switch_to_core_switch_delay)
-              + "ms\n\n")
-    res.write("set num_hosts "
-              + str(num_of_endhosts)
-              + "\nset num_nodes "
+    res.write("set edge_link " + str(endHost_to_edge_switch_bandwidth * 1000) + "Mb\n"
+              + "set agg_link " + str(edge_switch_to_aggregator_switch_bandwidth * 1000) + "Mb\n"
+              + "set core_link " + str(aggregator_switch_to_core_switch_bandwidth * 1000) + "Mb\n\n")
+    res.write("set edge_delay " + str(endHost_to_edge_switch_delay) + "ms\n"
+              + "set agg_delay " + str(edge_switch_to_aggregator_switch_delay) + "ms\n"
+              + "set core_delay " + str(aggregator_switch_to_core_switch_delay) + "ms\n\n")
+    res.write("set num_hosts " + str(num_of_endhosts) + "\n"
+              + "set num_nodes "
               + str(nodeIndex)
               + "\n\n")
 
@@ -242,7 +232,23 @@ def convertToTCLFormat():
 
     # defining links
     res.write("# creating links\n")
+
     links = endHostToEdgeSwitchLinks + edgeSwitchToAggregatorLinks + aggregatorSwitchToCoreSwitchLinks
+
+    # TODO: recheck this
+    # Remove reverse links form links
+    no_reverse_links = []
+    removed_links = []
+
+    # TODO: FIX THIS PROPERLY TO REMOVE DUPLICATE LINKS
+    for link in links:
+        if int(link['id']) % 2 == 0:
+            no_reverse_links.append(link)
+        else:
+            removed_links.append(link)
+
+    links = no_reverse_links
+
     for link in links:
         res.write("$ns duplex-link $n(" + link['start'][1:] + ") $n(" + link['end'][1:] + ") $edge_link $edge_delay DropTail\n")
 
@@ -620,11 +626,12 @@ def printDetails():
 
 
 # main function of python script
-def main():
+def start():
     """
     Defines the main method for the program
     """
     # generate the nodes
+    print "generating nodes"
     generateEndHosts()
 
     generateEdgeSwitches()
@@ -636,6 +643,7 @@ def main():
     print "node generation complete"
 
     # generate the links
+    print "generating links"
     generateEndHostToEdgesSwitchLinks()
 
     generateEdgesSwitchToAggregatorLinks()
@@ -657,18 +665,56 @@ def main():
     convertToTCLFormat()
     print 'task complete.'
 
-    # print "Generating Mapping"
-    # generateMapping(False)
-    # print 'task complete.'
+    print "Generating Mapping"
+    generateMapping(False)
+    print 'task complete.'
 
     # print "Generating per pod Mapping"
     # generateMappingPerPod(False)
     # print 'task complete.'
 
-    print "Generating per pod Mapping"
-    generateMappingPerPodBottomUp(False)
-    print 'task complete.'
+    # print "Generating per pod Mapping"
+    # generateMappingPerPodBottomUp(False)
+    # print 'task complete.'
     return
 
-if __name__ == '__main__':
-    main()
+print "================================================================================"
+print "==                         GENERATING TOPOLOGY                                =="
+print "================================================================================"
+start()
+print "================================================================================"
+
+print "copying files... \n"
+moving_files = commands.getstatusoutput('cp ./mapping.txt ./out.tcl ./createUtilGraph.py ./tcl/template.tcl ./out.txt ../out/')
+# move file to test dir too
+commands.getstatusoutput('cp ./mapping.txt ../test/')
+if int(moving_files[0]) != 0:
+    print "move failed"
+    sys.exit(1)
+
+print "Deleting files \n"
+deleting_files = commands.getstatusoutput('rm ./mapping.txt ./out.tcl ./out.txt')
+if int(deleting_files[0]) != 0:
+    print "Delete failed"
+    sys.exit(1)
+
+# run tests on created files
+print "================================================================================"
+print "==                         RUNNING TESTS                                      =="
+print "================================================================================"
+print "Make sure to set the vars in the test files before running tests"
+test_result = commands.getstatusoutput('cd ../test/ && python test_mapping.py')
+
+print "test result status code:", test_result[0], "\n"
+
+if int(test_result[0]) != 0:
+    print "test failed... aborting"
+    sys.exit(1)
+
+print "test result message::"
+print test_result[1]
+# go back to src
+commands.getstatusoutput('cd ../src')
+print "================================================================================"
+print "================================================================================"
+print "Completed."

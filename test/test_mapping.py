@@ -1,12 +1,16 @@
 import re
 
-# define k here
-number_of_items_in_division = 16
+# Define this var
+number_of_items_in_division = 2
+
+##############################
+#     DO NOT EDIT BELOW      #
+##############################
 
 
-def main():
+def start():
     """
-    this program tests the file mapping for redundacnies.
+    This program tests the file mapping for redundacnies.
     """
     lineCounter = 0
     containedLinks = []
@@ -23,8 +27,9 @@ def main():
             if ':' not in link:
                 if int(link) in containedLinks:
                     print "repeated link", link
+                    return 1
                 else:
-                    #print 'adding ', int(link)
+                    # print 'adding ', int(link)
                     containedLinks.append(int(link))
                 link_counter += 1
         lineCounter += 1
@@ -33,5 +38,10 @@ def main():
             containedLinks = []
             link_counter = 0
 
-if __name__ == '__main__':
-    main()
+    print "Mapping has no duplicates\n"
+    print "test sucessfull.",
+
+    return 0
+
+# start tests
+start()
