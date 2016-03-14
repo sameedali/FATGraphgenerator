@@ -310,7 +310,7 @@ def convertToTCLFormat():
     # writing Raza agent to the .tcl file
     res.write("set num_agents1 $num_agents\nfor { set i 0 } { $i < $num_nodes } { incr i } "
               + "{\n\tfor {set j 0} {$j < $num_nodes} {incr j} "
-              + "{\n\t\tset p($num_agents) [new Agent/Raza]\n"
+              + "{\n\t\tset p($num_agents) [new Agent/esdndht]\n"
               + "\t\t$ns attach-agent $n($i) $p($num_agents)\n\t\tincr num_agents\n\t}\n}\n\n")
 
     res.write("set ite $num_agents1\nset jStart 0\nfor { set i 0 } { $i < "
@@ -322,7 +322,14 @@ def convertToTCLFormat():
               + " } {\n\t\t\tset ite [expr $ite + $i + 1]\n\t\t\tcontinue\n\t\t}\n\t\t$ns connect $p($ite) $p([expr "
               + str(nodeIndex)
               + "*$j + $i + $num_agents1])\n\t\tincr ite\n\t}\n\tincr jStart\n}\n")
-    res.write("\n# TODO: start flows herer\n\nputs \"running ns\"\n$ns run")
+
+    res.write("\n# TODO: start flows herer\n")
+    res.write("puts \"running ns\"\n")
+
+    # required for CDF flow generation
+    res.write("set total_senders " + str(num_of_endhosts) + "\n")
+
+    res.write("$ns run\n")
     res.close()
     return
 
