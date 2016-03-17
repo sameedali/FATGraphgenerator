@@ -1,5 +1,5 @@
 logs/
 out/*
-!out/README.md
+!out/.gitkeep
 *.gp
 *.ps

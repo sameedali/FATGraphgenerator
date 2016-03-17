@@ -695,7 +695,7 @@ start()
 print "======================================================================="
 
 print "copying files... \n"
-moving_files = commands.getstatusoutput('cp ./mapping.txt ./out.tcl ./createUtilGraph.py ./tcl/template.tcl ./out.txt ./cleanup.py ./make_graphs.py ../out/')
+moving_files = commands.getstatusoutput('cp ./mapping.txt ./out.tcl ./createUtilGraph.py ./tcl/template.tcl ./out.txt ./cleanup.py ./make_graphs.py ./ratioCalc.py ../out/')
 # move file to test dir too
 commands.getstatusoutput('cp ./mapping.txt ../test/')
 if int(moving_files[0]) != 0:

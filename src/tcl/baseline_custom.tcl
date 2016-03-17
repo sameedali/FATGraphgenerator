@@ -1,13 +1,7 @@
 # Helper functions
-source twoway_basic_functions.tcl
+# source twoway_basic_functions.tcl
 
-# Arguments
-set webSearchCDF [expr [lindex $argv 0]];  # is CDF webSearchCDF?
-set sim_time     [expr [lindex $argv 1]];  # sim_time
-set num_seed     [expr [lindex $argv 2]];  # random
-set mice_load    [expr [lindex $argv 3]];  # 0.7 or 0.5
-set ac_bw        [expr [lindex $argv 4]];   # Bandwidth of the aggregation-core link, Mbps
-
+# Custom build TCP function
 proc esdn-build-tcp { src dst pktSize node_id startTime transfer_size } {
     global ns
     global time_tcp
@@ -44,14 +38,26 @@ proc esdn-build-tcp { src dst pktSize node_id startTime transfer_size } {
     return $tcp
 }
 
-puts "Starting Custom CDF files Experiments"
+# Arguments
+# set total_senders [expr $num_machine*$num_tor*$num_aggr*$num_core]
+# is CDF webSearchCDF?
+set webSearchCDF [expr [lindex $argv 0]];
+# sim_time
+set sim_time     [expr [lindex $argv 1]];
+# random
+set num_seed     [expr [lindex $argv 2]];
+# 0.7 or 0.5
+set mice_load    [expr [lindex $argv 3]];
+# (~ 1000) Bandwidth of the aggregation-core link, Mbps
+set ac_bw        [expr [lindex $argv 4]];
 
+puts "Starting Custom CDF files Experiments"
 ################################################################################
 # Random-number-generation
 ################################################################################
 # num-seed is random number from CL
 set run_i $num_seed
-set s [expr 33*($run_i+1)+4369*($run_i+3)] # more randomized
+set s [expr 33*($run_i+1)+4369*($run_i+3)]
 
 set rng2 [new RNG]
 
@@ -72,14 +78,15 @@ if { $webSearchCDF == 1} {
     set av_file_size 5116
 }
 
-# already set in template
+# ALREADY SET IN TEMPLATE
 # set total_senders [expr $num_machine*$num_tor*$num_aggr*$num_core]
+# total_senders are total number of end hosts available
 
 ################################################################################
 # Deciding on the Source and destination
 ################################################################################
 set min 0
-set max $total_senders-0.0001
+set max [expr $total_senders - 0.0001 ]
 puts "min = $min and max = $max"
 
 # This rv is used for picking source and destination nodes for short flows
@@ -91,11 +98,10 @@ set short_src [new RandomVariable/Uniform]
 $short_src use-rng $sender_num
 $short_src set min_ [expr $min]
 $short_src set max_ [expr $max]
-
 ################################################################################
 # Generating Inter-Arrival Times
 ################################################################################
-set ratio [expr 2.0*($total_senders-1)/$total_senders] #
+set ratio [expr 2.0*($total_senders-1)/$total_senders]
 
 puts "Ratio: $ratio"
 
@@ -116,7 +122,7 @@ $s_arrival use-rng $short_arrival
 ################################################################################
 # START SIMULATION
 ################################################################################
-set global_time 1.0
+set global_time 0.5
 puts "Building flows: (pktSize 1000)"
 
 while { $global_time <= [expr $sim_time/2.0] } {
@@ -137,11 +143,11 @@ while { $global_time <= [expr $sim_time/2.0] } {
     }
 
     # custom TCP function
-    puts "src: $sink, dst: $dest, size: [expr $transfer_size/1000] KB, start_time::$global_time\n"
-    set stcp [esdn-build-tcp $m($sink) $m($dest) 1000 $sink $global_time transfer_size]
+    puts "src: $sink, dst: $dest, size: [expr $transfer_size/1000] KB, start_time::$global_time"
+    set stcp [esdn-build-tcp $n($sink) $n($dest) 1000 $sink $global_time $transfer_size]
 
-    set dest_addr($flow_id) $dest
-    set flow_id [expr $flow_id + 1]
+    # set dest_addr($flow_id) $dest
+    # set flow_id [expr $flow_id + 1]
 }
 
-puts "All done"
+$ns at $sim_time "finish"
