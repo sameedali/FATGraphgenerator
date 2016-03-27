@@ -14,7 +14,7 @@ set STATS_INTR 0.08
 set interval 0.08
 
 proc printFlow {f outfile fm interval} {
-    global ns 
+    global ns
     #puts $outfile [format "FID: %d pckarv: %d bytarv: %d pckdrp: %d bytdrp: %d rate: %.0f drprt: %.3f" [$f set flowid_] [$f set parrivals_] [$f set barrivals_] [$f set pdrops_] [$f set bdrops_] [expr [$f set barrivals_]*8/($interval*1000.)] [expr [$f set pdrops_]/double([$f set parrivals_])] ]
 
     # flow_id, rate and drprt,
@@ -188,9 +188,9 @@ proc build-tcp { n0 n1 startTime endTime} {
 
 #important
 
-    $ns at [expr $endTime + 0.0001] "$tcp flow_end" 
+    $ns at [expr $endTime + 0.0001] "$tcp flow_end"
     $ns at endTime "$ftp stop"
-    
+
 
     $tcp set fid_ $f_id
     incr f_id
@@ -201,11 +201,19 @@ proc build-tcp { n0 n1 startTime endTime} {
 set nf [open out.nam w]
 $ns namtrace-all $nf
 
+# trace file
+set traceFile [open out.tr w]
+$ns trace-all $traceFile
+
 # defining finish procedure
 proc finish {} {
     global ns nf
+    global traceFile
+
     $ns flush-trace
     close $nf
+    close$traceFile
+
     exit 0
 }
 

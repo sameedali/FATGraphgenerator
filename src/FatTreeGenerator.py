@@ -241,7 +241,7 @@ def convertToTCLFormat():
     no_reverse_links = []
     removed_links = []
 
-    # TODO: FIX THIS PROPERLY TO REMOVE DUPLICATE LINKS
+    # FIXME: FIX THIS PROPERLY TO REMOVE DUPLICATE LINKS
     for link in links:
         if int(link['id']) % 2 == 0:
             no_reverse_links.append(link)
@@ -360,7 +360,7 @@ def slice_list(input, size):
     return result
 
 
-# TODO: test function for greating mapping per pod bottom up
+# TODO: test function for generating mapping per pod bottom up
 def generateMappingPerPodBottomUp(give_nodes_own_links):
     res = open("mapping.txt", 'w')   # opening file
 
@@ -602,9 +602,8 @@ def generateMapping(give_nodes_own_links):
 
 
 def printDetails():
-    """prints the nodes and links generated.
-    :returns: TODO
-
+    """
+    Prints the nodes and links generated.
     """
     print "Endhosts:\n"
     pprint.pprint(endHosts)
@@ -723,8 +722,10 @@ if int(test_result[0]) != 0:
 
 print "test result message::"
 print test_result[1]
+
 # go back to src
 commands.getstatusoutput('cd ../src')
+
 print "======================================================================="
 print "======================================================================="
 print "Completed."
