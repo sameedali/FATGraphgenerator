@@ -68,8 +68,7 @@ Edit the start of the `FatTreeGenerator.py` file to adjust the topology's K-valu
 
 The result will be stored in the out/ folder.
 
-Then run `ns2` on the generated TCL file.
-After ajusting the parameters in `out.tcl`.
+Then run `ns2` on the generated TCL file **after** ajusting the parameters in `out.tcl`.
 
 > cd ../out/
 
