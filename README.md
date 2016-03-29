@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/sameedali/FATGraphgenerator.svg?branch=master)](https://travis-ci.org/sameedali/FATGraphgenerator)
+[![Code Climate](https://codeclimate.com/github/sameedali/FATGraphgenerator/badges/gpa.svg)](https://codeclimate.com/github/sameedali/FATGraphgenerator)
 [![Issue Count](https://codeclimate.com/github/sameedali/FATGraphgenerator/badges/issue_count.svg)](https://codeclimate.com/github/sameedali/FATGraphgenerator)
+
 
 FatTreeGenerator
 =================
