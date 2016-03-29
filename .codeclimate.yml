@@ -1,25 +1,16 @@
 ---
 engines:
   duplication:
-    enabled: true
+    enabled: false
     config:
       languages:
-      - ruby
-      - javascript
       - python
-      - php
   fixme:
     enabled: true
   radon:
-    enabled: true
+    enabled: false
 ratings:
   paths:
-  - "**.inc"
-  - "**.js"
-  - "**.jsx"
-  - "**.module"
-  - "**.php"
   - "**.py"
-  - "**.rb"
 exclude_paths:
 - test/
