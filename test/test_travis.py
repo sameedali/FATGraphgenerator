@@ -4,7 +4,7 @@ import sys
 
 def main():
     """
-    TODO: Main method for travis test
+    Main method for travis test
     """
     sys.exit(0)
 
