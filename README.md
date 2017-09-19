@@ -6,7 +6,7 @@
 FatTreeGenerator
 =================
 
-This repository contains an k array FAT tree topology generator.
+This repository contains an k-ary FAT tree topology generator.
 
 
 A tcl representing the topology or the given k is genrated on running the python FatTreeGenerator.py script
